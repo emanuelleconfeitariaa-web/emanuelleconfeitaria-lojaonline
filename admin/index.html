@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -1463,9 +1464,64 @@ const CROPPED_IMAGES = {
 let CURRENT_CROP_TARGET = null;
 let CURRENT_CROP_IMG = null;
 let CURRENT_CROP_SCALE = 1;
+let CURRENT_CROP_MIN_SCALE = 1;
+let CURRENT_CROP_MAX_SCALE = 4;
 let CURRENT_CROP_X = 0;
 let CURRENT_CROP_Y = 0;
 
+
+
+
+
+
+function getCropRect(){
+  const canvas = $("cropCanvas");
+  if(!canvas){
+    return { cropX: 0, cropY: 0, cropW: 0, cropH: 0 };
+  }
+
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  const cropW = Math.min(520, cw - 60);
+  const cropH = Math.round(cropW * 0.72);
+  const cropX = (cw - cropW) / 2;
+  const cropY = (ch - cropH) / 2;
+
+  return { cropX, cropY, cropW, cropH };
+}
+
+function clampCropPosition(){
+  const canvas = $("cropCanvas");
+  const img = CURRENT_CROP_IMG;
+  if(!canvas || !img) return;
+
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  const { cropX, cropY, cropW, cropH } = getCropRect();
+
+  const drawW = img.width * CURRENT_CROP_SCALE;
+  const drawH = img.height * CURRENT_CROP_SCALE;
+
+  const baseX = (cw - drawW) / 2;
+  const baseY = (ch - drawH) / 2;
+
+  const minOffsetX = (cropX + cropW) - (baseX + drawW);
+  const maxOffsetX = cropX - baseX;
+
+  const minOffsetY = (cropY + cropH) - (baseY + drawH);
+  const maxOffsetY = cropY - baseY;
+
+  CURRENT_CROP_X = Math.min(maxOffsetX, Math.max(minOffsetX, CURRENT_CROP_X));
+  CURRENT_CROP_Y = Math.min(maxOffsetY, Math.max(minOffsetY, CURRENT_CROP_Y));
+}
+
+function centerCropImage(){
+  CURRENT_CROP_X = 0;
+  CURRENT_CROP_Y = 0;
+  clampCropPosition();
+}
 
 
 
@@ -1943,7 +1999,9 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
   if(!canvas) return;
 
   const getPoint = (e) => {
-    if(e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    if(e.touches && e.touches[0]){
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
     return { x: e.clientX, y: e.clientY };
   };
 
@@ -1951,19 +2009,31 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
     if(!CURRENT_CROP_IMG) return;
     dragging = true;
     canvas.classList.add("dragging");
+
     const p = getPoint(e);
     startX = p.x;
     startY = p.y;
+
+    if(e.cancelable) e.preventDefault();
   };
 
   const move = (e) => {
-    if(!dragging) return;
+    if(!dragging || !CURRENT_CROP_IMG) return;
+
     const p = getPoint(e);
-    CURRENT_CROP_X += (p.x - startX);
-    CURRENT_CROP_Y += (p.y - startY);
+    const dx = p.x - startX;
+    const dy = p.y - startY;
+
+    CURRENT_CROP_X += dx;
+    CURRENT_CROP_Y += dy;
+
     startX = p.x;
     startY = p.y;
+
+    clampCropPosition();
     drawCropCanvas();
+
+    if(e.cancelable) e.preventDefault();
   };
 
   const end = () => {
@@ -1975,23 +2045,46 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
   window.addEventListener("mousemove", move);
   window.addEventListener("mouseup", end);
 
-  canvas.addEventListener("touchstart", start, { passive:true });
-  window.addEventListener("touchmove", move, { passive:true });
+  canvas.addEventListener("touchstart", start, { passive:false });
+  window.addEventListener("touchmove", move, { passive:false });
   window.addEventListener("touchend", end);
 })();
 
 
 function openCropModal(targetKey, dataUrl){
   CURRENT_CROP_TARGET = targetKey;
-  CURRENT_CROP_SCALE = 1;
   CURRENT_CROP_X = 0;
   CURRENT_CROP_Y = 0;
 
   const img = new Image();
   img.onload = () => {
     CURRENT_CROP_IMG = img;
+
+    const canvas = $("cropCanvas");
     const zoom = $("cropZoom");
-    if(zoom) zoom.value = "1";
+    if(!canvas){
+      showModal("cropBack", true);
+      return;
+    }
+
+    const { cropW, cropH } = getCropRect();
+
+    const scaleToFillW = cropW / img.width;
+    const scaleToFillH = cropH / img.height;
+
+    CURRENT_CROP_MIN_SCALE = Math.max(scaleToFillW, scaleToFillH);
+    CURRENT_CROP_MAX_SCALE = Math.max(CURRENT_CROP_MIN_SCALE * 6, 3);
+
+    CURRENT_CROP_SCALE = CURRENT_CROP_MIN_SCALE;
+    centerCropImage();
+
+    if(zoom){
+      zoom.min = String(CURRENT_CROP_MIN_SCALE);
+      zoom.max = String(CURRENT_CROP_MAX_SCALE);
+      zoom.step = String(Math.max(CURRENT_CROP_MIN_SCALE / 100, 0.01));
+      zoom.value = String(CURRENT_CROP_SCALE);
+    }
+
     drawCropCanvas();
     showModal("cropBack", true);
   };
@@ -2015,6 +2108,8 @@ function drawCropCanvas(){
 
   ctx.clearRect(0, 0, cw, ch);
 
+  clampCropPosition();
+
   const scale = CURRENT_CROP_SCALE;
   const drawW = img.width * scale;
   const drawH = img.height * scale;
@@ -2022,16 +2117,25 @@ function drawCropCanvas(){
   const x = (cw - drawW) / 2 + CURRENT_CROP_X;
   const y = (ch - drawH) / 2 + CURRENT_CROP_Y;
 
-  // desenha a imagem inteira sem escurecer
+  const { cropX, cropY, cropW, cropH } = getCropRect();
+
+  // fundo
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, cw, ch);
+
+  // imagem
   ctx.drawImage(img, x, y, drawW, drawH);
 
-  // área de corte
-  const cropW = Math.min(520, cw - 60);
-  const cropH = Math.round(cropW * 0.72);
-  const cropX = (cw - cropW) / 2;
-  const cropY = (ch - cropH) / 2;
+  // escurece fora da área de corte
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.38)";
+  ctx.beginPath();
+  ctx.rect(0, 0, cw, ch);
+  ctx.rect(cropX, cropY, cropW, cropH);
+  ctx.fill("evenodd");
+  ctx.restore();
 
-  // só a borda da área de corte
+  // borda da área de corte
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 2;
   ctx.strokeRect(cropX, cropY, cropW, cropH);
@@ -2042,13 +2146,12 @@ function applyCropResult(){
   const img = CURRENT_CROP_IMG;
   if(!canvas || !img || !CURRENT_CROP_TARGET) return;
 
+  clampCropPosition();
+
   const cw = canvas.width;
   const ch = canvas.height;
 
-  const cropW = Math.min(520, cw - 60);
-  const cropH = Math.round(cropW * 0.72);
-  const cropX = (cw - cropW) / 2;
-  const cropY = (ch - cropH) / 2;
+  const { cropX, cropY, cropW, cropH } = getCropRect();
 
   const scale = CURRENT_CROP_SCALE;
   const drawW = img.width * scale;
@@ -2057,10 +2160,10 @@ function applyCropResult(){
   const x = (cw - drawW) / 2 + CURRENT_CROP_X;
   const y = (ch - drawH) / 2 + CURRENT_CROP_Y;
 
-  const sx = (cropX - x) / scale;
-  const sy = (cropY - y) / scale;
-  const sw = cropW / scale;
-  const sh = cropH / scale;
+  const sx = Math.max(0, (cropX - x) / scale);
+  const sy = Math.max(0, (cropY - y) / scale);
+  const sw = Math.min(img.width - sx, cropW / scale);
+  const sh = Math.min(img.height - sy, cropH / scale);
 
   const out = document.createElement("canvas");
   out.width = 1200;
@@ -2076,14 +2179,15 @@ function applyCropResult(){
   );
 
   const result = out.toDataURL("image/jpeg", 0.92);
+
   if(String(CURRENT_CROP_TARGET || "").startsWith("cat:")){
-  CROPPED_CATEGORY_IMAGES[CURRENT_CROP_TARGET] = result;
-}else{
-  CROPPED_IMAGES[CURRENT_CROP_TARGET] = result;
-  if(CURRENT_CROP_TARGET === "eImgFile1" || CURRENT_CROP_TARGET === "eImgFile2"){
-  setTimeout(renderEditImagePreviews, 30);
-   }
-}
+    CROPPED_CATEGORY_IMAGES[CURRENT_CROP_TARGET] = result;
+  }else{
+    CROPPED_IMAGES[CURRENT_CROP_TARGET] = result;
+    if(CURRENT_CROP_TARGET === "eImgFile1" || CURRENT_CROP_TARGET === "eImgFile2"){
+      setTimeout(renderEditImagePreviews, 30);
+    }
+  }
 
   closeCropModal();
   toast("Imagem cortada ✅");
@@ -4145,15 +4249,21 @@ $("eRemoveImg2")?.addEventListener("click", ()=>{
 $("closeCropBtn")?.addEventListener("click", closeCropModal);
 $("applyCropBtn")?.addEventListener("click", applyCropResult);
 $("resetCropBtn")?.addEventListener("click", ()=>{
-  CURRENT_CROP_SCALE = 1;
-  CURRENT_CROP_X = 0;
-  CURRENT_CROP_Y = 0;
-  if($("cropZoom")) $("cropZoom").value = "1";
+  CURRENT_CROP_SCALE = CURRENT_CROP_MIN_SCALE;
+  centerCropImage();
+
+  const zoom = $("cropZoom");
+  if(zoom) zoom.value = String(CURRENT_CROP_SCALE);
+
   drawCropCanvas();
 });
 
 $("cropZoom")?.addEventListener("input", ()=>{
-  CURRENT_CROP_SCALE = Number($("cropZoom").value || 1);
+  const zoom = $("cropZoom");
+  if(!zoom) return;
+
+  CURRENT_CROP_SCALE = Number(zoom.value || CURRENT_CROP_MIN_SCALE);
+  clampCropPosition();
   drawCropCanvas();
 });
 
