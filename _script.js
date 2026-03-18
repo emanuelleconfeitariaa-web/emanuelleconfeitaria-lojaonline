@@ -627,20 +627,24 @@ function applyReviewsLink(){
 }
 
 
-    async function loadProducts(){
+async function loadProducts(){
   const res = await fetch(API + "/api/products");
   const arr = await res.json();
 
-  // ✅ remove duplicados pelo id
   const map = new Map();
-  (arr || []).forEach(p => {
-    const key = String(p.id ?? "");
-    if(key) map.set(key, p);
+
+  (arr || []).forEach((p, i) => {
+    const key = String(p.id ?? p._id ?? "").trim();
+
+    if(key){
+      map.set(key, { ...p, id: key });
+    }else{
+      map.set("idx_" + i, { ...p, id: "idx_" + i });
+    }
   });
 
   PRODUCTS = [...map.values()];
 }
-
 function setActiveCategoryChip(cat, smooth = true){
   ACTIVE_CATEGORY = cat || "";
 
