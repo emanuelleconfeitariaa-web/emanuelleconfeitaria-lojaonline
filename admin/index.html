@@ -442,12 +442,14 @@
 #cropCanvas{
   touch-action: none;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #cropCanvas.dragging{
   cursor: grabbing;
 }
-
 @media (max-width: 760px){
   #cropGrid{
     grid-template-columns: 1fr !important;
@@ -1989,65 +1991,94 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
 });
 
 
-
 (function setupCropCanvasDrag(){
   let dragging = false;
-  let startX = 0;
-  let startY = 0;
+  let startClientX = 0;
+  let startClientY = 0;
 
   const canvas = $("cropCanvas");
   if(!canvas) return;
 
-  const getPoint = (e) => {
+  function getPointFromEvent(e){
     if(e.touches && e.touches[0]){
-      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      return {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
     }
-    return { x: e.clientX, y: e.clientY };
-  };
 
-  const start = (e) => {
+    if(e.changedTouches && e.changedTouches[0]){
+      return {
+        x: e.changedTouches[0].clientX,
+        y: e.changedTouches[0].clientY
+      };
+    }
+
+    return {
+      x: e.clientX,
+      y: e.clientY
+    };
+  }
+
+  function startDrag(e){
     if(!CURRENT_CROP_IMG) return;
+
     dragging = true;
     canvas.classList.add("dragging");
 
-    const p = getPoint(e);
-    startX = p.x;
-    startY = p.y;
+    const p = getPointFromEvent(e);
+    startClientX = p.x;
+    startClientY = p.y;
 
-    if(e.cancelable) e.preventDefault();
-  };
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
-  const move = (e) => {
+  function moveDrag(e){
     if(!dragging || !CURRENT_CROP_IMG) return;
 
-    const p = getPoint(e);
-    const dx = p.x - startX;
-    const dy = p.y - startY;
+    const p = getPointFromEvent(e);
+    const dx = p.x - startClientX;
+    const dy = p.y - startClientY;
 
     CURRENT_CROP_X += dx;
     CURRENT_CROP_Y += dy;
 
-    startX = p.x;
-    startY = p.y;
+    startClientX = p.x;
+    startClientY = p.y;
 
     clampCropPosition();
+    console.log("arrastando", CURRENT_CROP_X, CURRENT_CROP_Y);
     drawCropCanvas();
 
-    if(e.cancelable) e.preventDefault();
-  };
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
-  const end = () => {
+  function endDrag(e){
+    if(!dragging) return;
+
     dragging = false;
     canvas.classList.remove("dragging");
-  };
 
-  canvas.addEventListener("mousedown", start);
-  window.addEventListener("mousemove", move);
-  window.addEventListener("mouseup", end);
+    if(e){
+      e.preventDefault?.();
+      e.stopPropagation?.();
+    }
+  }
 
-  canvas.addEventListener("touchstart", start, { passive:false });
-  window.addEventListener("touchmove", move, { passive:false });
-  window.addEventListener("touchend", end);
+  canvas.addEventListener("mousedown", startDrag);
+  window.addEventListener("mousemove", moveDrag);
+  window.addEventListener("mouseup", endDrag);
+
+  canvas.addEventListener("touchstart", startDrag, { passive: false });
+  window.addEventListener("touchmove", moveDrag, { passive: false });
+  window.addEventListener("touchend", endDrag, { passive: false });
+  window.addEventListener("touchcancel", endDrag, { passive: false });
+
+  canvas.addEventListener("dragstart", (e)=>{
+    e.preventDefault();
+  });
 })();
 
 
