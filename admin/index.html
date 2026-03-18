@@ -438,7 +438,6 @@
   z-index: 20010 !important;
 }
 
-
 #cropCanvas{
   touch-action: none;
   cursor: grab;
@@ -608,6 +607,11 @@
             <div class="muted">Ex.: Cobertura de chocolate (+5,00)</div>
             <div id="pAddonsList" class="addonsList"></div>
             <button class="btn btnGhost" type="button" id="pAddonsAdd" style="margin-top:8px;width:100%;">+ Adicionar adicional</button>
+
+            <label style="margin-top:12px">Sabores (obrigatório escolher 1 na loja, se existir)</label>
+            <div class="muted">Ex.: Morango, Chocolate, Nuvem Doce</div>
+            <div id="pFlavorsList" class="addonsList"></div>
+            <button class="btn btnGhost" type="button" id="pFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
 
 <label>Imagens do produto</label>
 
@@ -1168,7 +1172,12 @@
 <label style="margin-top:12px">Adicionais (opcional)</label>
 <div class="muted">Ex.: Cobertura de chocolate (+5,00)</div>
 <div id="eAddonsList" class="addonsList"></div>
-<button class="btn btnGhost" type="button" id="eAddonsAdd" style="margin-top:8px;width:100%;">+ Adicionar adicional</button>
+<button class="btn btnGhost" type="button" id="eAddonsAdd" style="margin-top:8px;width:100%;">+ Adicional</button>
+
+<label style="margin-top:12px">Sabores</label>
+<div class="muted">Se houver sabores, a loja exigirá a escolha de 1 sabor.</div>
+<div id="eFlavorsList" class="addonsList"></div>
+<button class="btn btnGhost" type="button" id="eFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
 
 <label style="margin-top:12px">Imagens do produto</label>
 
@@ -1472,6 +1481,43 @@ let CURRENT_CROP_X = 0;
 let CURRENT_CROP_Y = 0;
 
 
+
+
+function addFlavorRow(listId, flavor){
+  const list = document.getElementById(listId);
+  if(!list) return;
+
+  const value = String(flavor || "").trim();
+
+  const row = document.createElement("div");
+  row.className = "addonRow";
+  row.innerHTML = `
+    <input class="inp" data-flavor-name placeholder="Nome do sabor (ex: Chocolate)" value="${escapeAttr(value)}">
+    <div></div>
+    <button type="button" class="addonRemove" title="Remover">✕</button>
+  `;
+
+  row.querySelector(".addonRemove")?.addEventListener("click", ()=> row.remove());
+  list.appendChild(row);
+}
+
+function readFlavorsEditor(listId){
+  const list = document.getElementById(listId);
+  if(!list) return [];
+
+  const rows = Array.from(list.querySelectorAll(".addonRow"));
+  return rows
+    .map(r => (r.querySelector("[data-flavor-name]")?.value || "").trim())
+    .filter(Boolean);
+}
+
+function fillFlavorsEditor(listId, flavors){
+  const list = document.getElementById(listId);
+  if(!list) return;
+
+  list.innerHTML = "";
+  (flavors || []).forEach(f => addFlavorRow(listId, f));
+}
 
 
 
@@ -1991,29 +2037,19 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
 });
 
 
-(function setupCropCanvasDrag(){
-  let dragging = false;
-  let startClientX = 0;
-  let startClientY = 0;
-
+function setupCropCanvasDrag(){
   const canvas = $("cropCanvas");
   if(!canvas) return;
 
-  function getPointFromEvent(e){
-    if(e.touches && e.touches[0]){
-      return {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY
-      };
-    }
+  if(canvas.dataset.dragBound === "1") return;
+  canvas.dataset.dragBound = "1";
 
-    if(e.changedTouches && e.changedTouches[0]){
-      return {
-        x: e.changedTouches[0].clientX,
-        y: e.changedTouches[0].clientY
-      };
-    }
+  let dragging = false;
+  let pointerId = null;
+  let startClientX = 0;
+  let startClientY = 0;
 
+  function getPoint(e){
     return {
       x: e.clientX,
       y: e.clientY
@@ -2022,65 +2058,65 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
 
   function startDrag(e){
     if(!CURRENT_CROP_IMG) return;
+    if(e.button !== undefined && e.button !== 0) return;
 
     dragging = true;
+    pointerId = e.pointerId ?? null;
     canvas.classList.add("dragging");
 
-    const p = getPointFromEvent(e);
+    const p = getPoint(e);
     startClientX = p.x;
     startClientY = p.y;
+
+    try{
+      if(pointerId !== null) canvas.setPointerCapture(pointerId);
+    }catch(_e){}
 
     e.preventDefault();
     e.stopPropagation();
   }
 
   function moveDrag(e){
-    if(!dragging || !CURRENT_CROP_IMG) return;
+    if(!dragging) return;
+    if(pointerId !== null && e.pointerId != null && e.pointerId !== pointerId) return;
+    if(!CURRENT_CROP_IMG) return;
 
-    const p = getPointFromEvent(e);
+    const p = getPoint(e);
     const dx = p.x - startClientX;
     const dy = p.y - startClientY;
-
-    CURRENT_CROP_X += dx;
-    CURRENT_CROP_Y += dy;
 
     startClientX = p.x;
     startClientY = p.y;
 
+    CURRENT_CROP_X += dx;
+    CURRENT_CROP_Y += dy;
+
     clampCropPosition();
-    console.log("arrastando", CURRENT_CROP_X, CURRENT_CROP_Y);
     drawCropCanvas();
 
     e.preventDefault();
-    e.stopPropagation();
   }
 
   function endDrag(e){
     if(!dragging) return;
+    if(pointerId !== null && e?.pointerId != null && e.pointerId !== pointerId) return;
 
     dragging = false;
     canvas.classList.remove("dragging");
 
-    if(e){
-      e.preventDefault?.();
-      e.stopPropagation?.();
-    }
+    try{
+      if(pointerId !== null) canvas.releasePointerCapture(pointerId);
+    }catch(_e){}
+
+    pointerId = null;
   }
 
-  canvas.addEventListener("mousedown", startDrag);
-  window.addEventListener("mousemove", moveDrag);
-  window.addEventListener("mouseup", endDrag);
-
-  canvas.addEventListener("touchstart", startDrag, { passive: false });
-  window.addEventListener("touchmove", moveDrag, { passive: false });
-  window.addEventListener("touchend", endDrag, { passive: false });
-  window.addEventListener("touchcancel", endDrag, { passive: false });
-
-  canvas.addEventListener("dragstart", (e)=>{
-    e.preventDefault();
-  });
-})();
-
+  canvas.addEventListener("pointerdown", startDrag);
+  window.addEventListener("pointermove", moveDrag, { passive:false });
+  window.addEventListener("pointerup", endDrag, { passive:false });
+  window.addEventListener("pointercancel", endDrag, { passive:false });
+  canvas.addEventListener("dragstart", (e)=> e.preventDefault());
+}
 
 function openCropModal(targetKey, dataUrl){
   CURRENT_CROP_TARGET = targetKey;
@@ -3098,6 +3134,7 @@ if(f2 && !img2){
     featured, stock_enabled, stock_qty, low_stock_alert,
     paused, image_url, images,
     addons: readAddonsEditor("pAddonsList"),
+    flavors: readFlavorsEditor("pFlavorsList"),
     discount_percent: Number($("pDiscount")?.value || 0)
   };
 
@@ -3130,6 +3167,7 @@ if(f2 && !img2){
   if($("pImgFile2")) $("pImgFile2").value = "";
   $("pDiscount").value = "0";
   fillAddonsEditor("pAddonsList", []);
+  fillFlavorsEditor("pFlavorsList", []);
 
   toast("Produto cadastrado ✅");
   await loadCategories();
@@ -3209,7 +3247,7 @@ function openEdit(id){
 
   $("eStatus").textContent = "";
   fillAddonsEditor("eAddonsList", editingCurrent.addons || []);
-
+  fillFlavorsEditor("eFlavorsList", editingCurrent.flavors || []);
   editingCurrent.__editImages = editImages;
 
   EDIT_REMOVE_IMAGE_1 = false;
@@ -3247,6 +3285,7 @@ async function saveEdit(){
     low_stock_alert: Number($("eLowStock").value || 5),
     paused: ($("ePaused").value === "true"),
     addons: readAddonsEditor("eAddonsList"),
+    flavors: readFlavorsEditor("eFlavorsList"),
     discount_percent: Number($("eDiscount")?.value || 0)
   };
 
@@ -4166,7 +4205,10 @@ async function savePdvPrefs(){
 }
 
    // ====== EVENTS ======
-document.addEventListener("DOMContentLoaded", async ()=>{ 
+    document.addEventListener("DOMContentLoaded", async ()=>{ 
+    setupCropCanvasDrag();
+
+
   try{
     await ensureAdminAuth();
     unlockAdminUI();
@@ -4218,7 +4260,9 @@ $("uiLogoImg")?.addEventListener("change", async ()=>{
     alert("Não foi possível ler a imagem da logo.");
   }
 });
-
+  
+  $("pFlavorsAdd")?.addEventListener("click", ()=> addFlavorRow("pFlavorsList"));
+  $("eFlavorsAdd")?.addEventListener("click", ()=> addFlavorRow("eFlavorsList"));
 
   $("saveStoreUi")?.addEventListener("click", saveStoreUi);
 
@@ -4249,6 +4293,9 @@ bindCropInputById("pImgFile1");
 bindCropInputById("pImgFile2");
 bindCropInputById("eImgFile1");
 bindCropInputById("eImgFile2");
+
+
+
 
 
 $("eImgFile1")?.addEventListener("change", ()=>{
@@ -5338,7 +5385,7 @@ document.getElementById("pdvStoreBack")?.addEventListener("click", (e)=>{
     <div class="mBody">
       <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;" id="cropGrid">
         <div style="background:#111;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:340px;">
-          <canvas id="cropCanvas" width="900" height="600" style="width:100%;max-width:100%;display:block;background:#111;"></canvas>
+          <canvas id="cropCanvas" width="900" height="600" style="width:100%;max-width:100%;display:block;background:#111;pointer-events:auto;"></canvas>
         </div>
 
         <div>
