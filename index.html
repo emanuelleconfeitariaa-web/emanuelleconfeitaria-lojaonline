@@ -2154,10 +2154,16 @@ body{
           </div>
         </div>
 
-<div style="margin-top:12px" id="addrBox" style="display:none">
-          <label class="mutedTxt"><b>Endereço para entrega</b></label>
-          <input id="addr" placeholder="Rua, número, bairro...">
-        </div>
+<div style="margin-top:12px" id="addrBox">
+  <label class="mutedTxt"><b>Endereço para entrega</b></label>
+  <input id="addr" placeholder="Rua, número, bairro...">
+
+  <button type="button" class="mBtn" id="useLocationBtn" style="margin-top:8px;">
+    Usar minha localização exata
+  </button>
+
+  <div id="geoMsg" class="hint" style="margin-top:6px; display:none;"></div>
+</div>
 
         <div style="margin-top:12px">
           <label class="mutedTxt"><b>Observações</b></label>
