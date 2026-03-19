@@ -84,6 +84,8 @@ function renderModalFlavors(p){
   });
 }
 
+
+
 function productFlavorLabel(flavor){
   const f = String(flavor || "").trim();
   return f ? ` • Sabor: ${f}` : "";
@@ -379,16 +381,22 @@ let scrollSpyTicking = false;
 function updateActiveCategoryFromScroll() {
   if (IS_AUTO_SCROLLING) return;
 
+  const frame = document.querySelector(".frame");
   const bar = document.getElementById("catsBar");
-  const barBottom = bar ? bar.getBoundingClientRect().bottom : 60;
-  const threshold = barBottom + 8;
+  if(!frame || !bar) return;
+
+  const frameRect = frame.getBoundingClientRect();
+  const barRect = bar.getBoundingClientRect();
+  const threshold = barRect.bottom - frameRect.top + 8;
 
   const sections = document.querySelectorAll(".catBlock[data-cat-section]");
   let currentCat = null;
 
   sections.forEach(sec => {
-    const rect = sec.getBoundingClientRect();
-    if (rect.top <= threshold && rect.bottom > threshold) {
+    const secTop = sec.offsetTop - frame.scrollTop;
+    const secBottom = secTop + sec.offsetHeight;
+
+    if (secTop <= threshold && secBottom > threshold) {
       currentCat = sec.getAttribute("data-cat-section");
     }
   });
@@ -398,40 +406,24 @@ function updateActiveCategoryFromScroll() {
   }
 }
 
-
-
 function syncActiveCategoryDuringAutoScroll() {
-  const bar = document.getElementById("catsBar");
-  const barBottom = bar ? bar.getBoundingClientRect().bottom : 60;
-  const threshold = barBottom + 8;
-
-  const sections = document.querySelectorAll(".catBlock[data-cat-section]");
-  let currentCat = null;
-
-  sections.forEach(sec => {
-    const rect = sec.getBoundingClientRect();
-    if (rect.top <= threshold && rect.bottom > threshold) {
-      currentCat = sec.getAttribute("data-cat-section");
-    }
-  });
-
-  if (currentCat && currentCat !== ACTIVE_CATEGORY) {
-    setActiveCategoryChip(currentCat, false);
-  }
+  updateActiveCategoryFromScroll();
 }
 
 
 
 
 // Escuta a rolagem do dedo na tela e atualiza a barrinha
-window.addEventListener("scroll", () => {
-    if (!scrollSpyTicking) {
-        window.requestAnimationFrame(() => {
-            updateActiveCategoryFromScroll();
-            scrollSpyTicking = false;
-        });
-        scrollSpyTicking = true;
-    }
+const frameEl = document.querySelector(".frame");
+
+frameEl?.addEventListener("scroll", () => {
+  if (!scrollSpyTicking) {
+    requestAnimationFrame(() => {
+      updateActiveCategoryFromScroll();
+      scrollSpyTicking = false;
+    });
+    scrollSpyTicking = true;
+  }
 }, { passive: true });
 
 
@@ -742,44 +734,35 @@ function setActiveCategorySection(cat){
 
 
 function scrollToCategory(cat){
+  const frame = document.querySelector(".frame");
+  const bar = document.getElementById("catsBar");
   const target = document.querySelector(`.catBlock[data-cat-section="${CSS.escape(cat)}"]`);
-  if(!target) return;
+
+  if(!frame || !bar || !target) return;
 
   IS_AUTO_SCROLLING = true;
   setActiveCategoryChip(cat, true);
 
-  const bar = document.getElementById("catsBar");
-  const headerOffset = (bar ? bar.offsetHeight : 50) + 12;
+  const frameRect = frame.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
 
-  const elementPosition = target.getBoundingClientRect().top;
-  const offsetPosition = elementPosition + window.scrollY - headerOffset;
+  const headerOffset = bar.offsetHeight + 10;
 
-  let followTimer = null;
+  const top =
+    frame.scrollTop +
+    (targetRect.top - frameRect.top) -
+    headerOffset;
 
-  const onFollow = () => {
-    syncActiveCategoryDuringAutoScroll();
-
-    clearTimeout(followTimer);
-    followTimer = setTimeout(() => {
-      window.removeEventListener("scroll", onFollow);
-      IS_AUTO_SCROLLING = false;
-      updateActiveCategoryFromScroll();
-    }, 120);
-  };
-
-  window.addEventListener("scroll", onFollow, { passive: true });
-
-  window.scrollTo({
-    top: offsetPosition,
+  frame.scrollTo({
+    top,
     behavior: "smooth"
   });
 
-  // fallback caso o navegador não dispare scroll como esperado
-  setTimeout(() => {
-    window.removeEventListener("scroll", onFollow);
+  clearTimeout(scrollToCategory._t);
+  scrollToCategory._t = setTimeout(() => {
     IS_AUTO_SCROLLING = false;
     updateActiveCategoryFromScroll();
-  }, 1200);
+  }, 500);
 }
 
 function buildCategories(){
@@ -1847,7 +1830,6 @@ document.getElementById("hoursModal")?.addEventListener("click", (e)=>{
       buildCategories();
       render();
       renderCart();
-
 
 
      $("q")?.addEventListener("input", ()=>{
