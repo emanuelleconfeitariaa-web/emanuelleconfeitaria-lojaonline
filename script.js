@@ -27,6 +27,7 @@ let FILTER_SHOW = "ALL";
 let DYNAMIC_SHIPPING = null;
 let FEATURED_CATS = new Set();
 let SHIPPING_QUOTE_TIMER = null;
+let CUSTOMER_GEO = null; // { lat, lon }
 
 function setVal(id, v){
   const el = document.getElementById(id);
@@ -182,6 +183,64 @@ function discountedPrice(price, discountPercent){
   if(!d) return p;
   return Math.round(p * (1 - d/100) * 100) / 100;
 }
+
+
+
+
+
+async function useExactLocation(){
+  const geoMsg = $("geoMsg");
+  if(geoMsg){
+    geoMsg.style.display = "block";
+    geoMsg.textContent = "Solicitando sua localização...";
+  }
+
+  if(!navigator.geolocation){
+    if(geoMsg){
+      geoMsg.textContent = "Seu navegador não suporta localização.";
+    }
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      CUSTOMER_GEO = {
+        lat: Number(pos.coords.latitude),
+        lon: Number(pos.coords.longitude)
+      };
+
+      if(geoMsg){
+        geoMsg.textContent = "Localização capturada com sucesso.";
+      }
+
+      if(String($("type")?.value || "") === "ENTREGA"){
+        await quoteShippingByAddress();
+      }
+    },
+    (err) => {
+      CUSTOMER_GEO = null;
+
+      let msg = "Não foi possível obter sua localização.";
+      if(err && err.code === 1) msg = "Permissão de localização negada.";
+      if(err && err.code === 2) msg = "Localização indisponível.";
+      if(err && err.code === 3) msg = "Tempo esgotado ao obter localização.";
+
+      if(geoMsg){
+        geoMsg.style.display = "block";
+        geoMsg.textContent = msg;
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}
+
+
+
+
 
 
 function openProdModal(p){
@@ -1084,11 +1143,10 @@ async function quoteShippingByAddress(){
     return;
   }
 
-  if(!address){
+  if(!CUSTOMER_GEO && !address){
     DYNAMIC_SHIPPING = null;
     if(msg){
-      const fallback = Number(SETTINGS?.default_shipping || 0);
-      msg.textContent = `Informe o endereço para calcular o frete.`;
+      msg.textContent = "Informe o endereço ou use sua localização para calcular o frete.";
       msg.style.display = "block";
     }
     renderCart();
@@ -1101,10 +1159,14 @@ async function quoteShippingByAddress(){
   }
 
   try{
+    const payload = CUSTOMER_GEO
+      ? { lat: CUSTOMER_GEO.lat, lon: CUSTOMER_GEO.lon }
+      : { address };
+
     const res = await fetch(API + "/api/shipping/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address })
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json().catch(()=>null);
@@ -1518,6 +1580,10 @@ const payload = {
   shipping: Number(t.shipping || 0),
   subtotal: Number(t.subtotal || 0),
   total: Number(t.total || 0),
+  customer_location: CUSTOMER_GEO ? {
+  lat: Number(CUSTOMER_GEO.lat),
+  lon: Number(CUSTOMER_GEO.lon)
+} : null,
   items
 };
 
@@ -1872,6 +1938,8 @@ document.getElementById("closeDrawer")?.addEventListener("click", closeDrawer);
 });    
 
 
+
+
 $("checkoutBtn").addEventListener("click", ()=>{
   if(!CART.length) return alert("Carrinho vazio.");
   hideCartBar();
@@ -1914,6 +1982,14 @@ $("type")?.addEventListener("change", async ()=>{
 
 
 $("addr")?.addEventListener("input", ()=>{
+  CUSTOMER_GEO = null;
+
+  const geoMsg = $("geoMsg");
+  if(geoMsg){
+    geoMsg.style.display = "none";
+    geoMsg.textContent = "";
+  }
+
   if(String($("type")?.value || "") === "ENTREGA"){
     scheduleShippingQuote(900);
   }
@@ -1942,7 +2018,7 @@ $("addr")?.addEventListener("blur", async ()=>{
 
 $("filterBtn").addEventListener("click", openFilter);
 $("closeFilter").addEventListener("click", closeFilter);
-
+$("useLocationBtn")?.addEventListener("click", useExactLocation);
 $("filterBack").addEventListener("click", (e)=>{
   if(e.target === $("filterBack")) closeFilter();
 });
