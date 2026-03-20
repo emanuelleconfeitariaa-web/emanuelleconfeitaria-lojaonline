@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -438,17 +437,16 @@
   z-index: 20010 !important;
 }
 
+
 #cropCanvas{
   touch-action: none;
   cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
 }
 
 #cropCanvas.dragging{
   cursor: grabbing;
 }
+
 @media (max-width: 760px){
   #cropGrid{
     grid-template-columns: 1fr !important;
@@ -607,11 +605,6 @@
             <div class="muted">Ex.: Cobertura de chocolate (+5,00)</div>
             <div id="pAddonsList" class="addonsList"></div>
             <button class="btn btnGhost" type="button" id="pAddonsAdd" style="margin-top:8px;width:100%;">+ Adicionar adicional</button>
-
-            <label style="margin-top:12px">Sabores (obrigatório escolher 1 na loja, se existir)</label>
-            <div class="muted">Ex.: Morango, Chocolate, Nuvem Doce</div>
-            <div id="pFlavorsList" class="addonsList"></div>
-            <button class="btn btnGhost" type="button" id="pFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
 
 <label>Imagens do produto</label>
 
@@ -1172,12 +1165,7 @@
 <label style="margin-top:12px">Adicionais (opcional)</label>
 <div class="muted">Ex.: Cobertura de chocolate (+5,00)</div>
 <div id="eAddonsList" class="addonsList"></div>
-<button class="btn btnGhost" type="button" id="eAddonsAdd" style="margin-top:8px;width:100%;">+ Adicional</button>
-
-<label style="margin-top:12px">Sabores</label>
-<div class="muted">Se houver sabores, a loja exigirá a escolha de 1 sabor.</div>
-<div id="eFlavorsList" class="addonsList"></div>
-<button class="btn btnGhost" type="button" id="eFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
+<button class="btn btnGhost" type="button" id="eAddonsAdd" style="margin-top:8px;width:100%;">+ Adicionar adicional</button>
 
 <label style="margin-top:12px">Imagens do produto</label>
 
@@ -1475,101 +1463,9 @@ const CROPPED_IMAGES = {
 let CURRENT_CROP_TARGET = null;
 let CURRENT_CROP_IMG = null;
 let CURRENT_CROP_SCALE = 1;
-let CURRENT_CROP_MIN_SCALE = 1;
-let CURRENT_CROP_MAX_SCALE = 4;
 let CURRENT_CROP_X = 0;
 let CURRENT_CROP_Y = 0;
 
-
-
-
-function addFlavorRow(listId, flavor){
-  const list = document.getElementById(listId);
-  if(!list) return;
-
-  const value = String(flavor || "").trim();
-
-  const row = document.createElement("div");
-  row.className = "addonRow";
-  row.innerHTML = `
-    <input class="inp" data-flavor-name placeholder="Nome do sabor (ex: Chocolate)" value="${escapeAttr(value)}">
-    <div></div>
-    <button type="button" class="addonRemove" title="Remover">✕</button>
-  `;
-
-  row.querySelector(".addonRemove")?.addEventListener("click", ()=> row.remove());
-  list.appendChild(row);
-}
-
-function readFlavorsEditor(listId){
-  const list = document.getElementById(listId);
-  if(!list) return [];
-
-  const rows = Array.from(list.querySelectorAll(".addonRow"));
-  return rows
-    .map(r => (r.querySelector("[data-flavor-name]")?.value || "").trim())
-    .filter(Boolean);
-}
-
-function fillFlavorsEditor(listId, flavors){
-  const list = document.getElementById(listId);
-  if(!list) return;
-
-  list.innerHTML = "";
-  (flavors || []).forEach(f => addFlavorRow(listId, f));
-}
-
-
-
-
-function getCropRect(){
-  const canvas = $("cropCanvas");
-  if(!canvas){
-    return { cropX: 0, cropY: 0, cropW: 0, cropH: 0 };
-  }
-
-  const cw = canvas.width;
-  const ch = canvas.height;
-
-  const cropW = Math.min(520, cw - 60);
-  const cropH = Math.round(cropW * 0.72);
-  const cropX = (cw - cropW) / 2;
-  const cropY = (ch - cropH) / 2;
-
-  return { cropX, cropY, cropW, cropH };
-}
-
-function clampCropPosition(){
-  const canvas = $("cropCanvas");
-  const img = CURRENT_CROP_IMG;
-  if(!canvas || !img) return;
-
-  const cw = canvas.width;
-  const ch = canvas.height;
-
-  const { cropX, cropY, cropW, cropH } = getCropRect();
-
-  const drawW = img.width * CURRENT_CROP_SCALE;
-  const drawH = img.height * CURRENT_CROP_SCALE;
-
-  const baseX = (cw - drawW) / 2;
-  const baseY = (ch - drawH) / 2;
-
-  const minOffsetX = (cropX + cropW) - (baseX + drawW);
-  const maxOffsetX = cropX - baseX;
-
-  const minOffsetY = (cropY + cropH) - (baseY + drawH);
-  const maxOffsetY = cropY - baseY;
-
-  CURRENT_CROP_X = Math.min(maxOffsetX, Math.max(minOffsetX, CURRENT_CROP_X));
-  CURRENT_CROP_Y = Math.min(maxOffsetY, Math.max(minOffsetY, CURRENT_CROP_Y));
-}
-
-function centerCropImage(){
-  CURRENT_CROP_X = 0;
-  CURRENT_CROP_Y = 0;
-  clampCropPosition();
-}
 
 
 
@@ -2037,121 +1933,65 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
 });
 
 
-function setupCropCanvasDrag(){
+
+(function setupCropCanvasDrag(){
+  let dragging = false;
+  let startX = 0;
+  let startY = 0;
+
   const canvas = $("cropCanvas");
   if(!canvas) return;
 
-  if(canvas.dataset.dragBound === "1") return;
-  canvas.dataset.dragBound = "1";
+  const getPoint = (e) => {
+    if(e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  };
 
-  let dragging = false;
-  let pointerId = null;
-  let startClientX = 0;
-  let startClientY = 0;
-
-  function getPoint(e){
-    return {
-      x: e.clientX,
-      y: e.clientY
-    };
-  }
-
-  function startDrag(e){
+  const start = (e) => {
     if(!CURRENT_CROP_IMG) return;
-    if(e.button !== undefined && e.button !== 0) return;
-
     dragging = true;
-    pointerId = e.pointerId ?? null;
     canvas.classList.add("dragging");
-
     const p = getPoint(e);
-    startClientX = p.x;
-    startClientY = p.y;
+    startX = p.x;
+    startY = p.y;
+  };
 
-    try{
-      if(pointerId !== null) canvas.setPointerCapture(pointerId);
-    }catch(_e){}
-
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  function moveDrag(e){
+  const move = (e) => {
     if(!dragging) return;
-    if(pointerId !== null && e.pointerId != null && e.pointerId !== pointerId) return;
-    if(!CURRENT_CROP_IMG) return;
-
     const p = getPoint(e);
-    const dx = p.x - startClientX;
-    const dy = p.y - startClientY;
-
-    startClientX = p.x;
-    startClientY = p.y;
-
-    CURRENT_CROP_X += dx;
-    CURRENT_CROP_Y += dy;
-
-    clampCropPosition();
+    CURRENT_CROP_X += (p.x - startX);
+    CURRENT_CROP_Y += (p.y - startY);
+    startX = p.x;
+    startY = p.y;
     drawCropCanvas();
+  };
 
-    e.preventDefault();
-  }
-
-  function endDrag(e){
-    if(!dragging) return;
-    if(pointerId !== null && e?.pointerId != null && e.pointerId !== pointerId) return;
-
+  const end = () => {
     dragging = false;
     canvas.classList.remove("dragging");
+  };
 
-    try{
-      if(pointerId !== null) canvas.releasePointerCapture(pointerId);
-    }catch(_e){}
+  canvas.addEventListener("mousedown", start);
+  window.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", end);
 
-    pointerId = null;
-  }
+  canvas.addEventListener("touchstart", start, { passive:true });
+  window.addEventListener("touchmove", move, { passive:true });
+  window.addEventListener("touchend", end);
+})();
 
-  canvas.addEventListener("pointerdown", startDrag);
-  window.addEventListener("pointermove", moveDrag, { passive:false });
-  window.addEventListener("pointerup", endDrag, { passive:false });
-  window.addEventListener("pointercancel", endDrag, { passive:false });
-  canvas.addEventListener("dragstart", (e)=> e.preventDefault());
-}
 
 function openCropModal(targetKey, dataUrl){
   CURRENT_CROP_TARGET = targetKey;
+  CURRENT_CROP_SCALE = 1;
   CURRENT_CROP_X = 0;
   CURRENT_CROP_Y = 0;
 
   const img = new Image();
   img.onload = () => {
     CURRENT_CROP_IMG = img;
-
-    const canvas = $("cropCanvas");
     const zoom = $("cropZoom");
-    if(!canvas){
-      showModal("cropBack", true);
-      return;
-    }
-
-    const { cropW, cropH } = getCropRect();
-
-    const scaleToFillW = cropW / img.width;
-    const scaleToFillH = cropH / img.height;
-
-    CURRENT_CROP_MIN_SCALE = Math.max(scaleToFillW, scaleToFillH);
-    CURRENT_CROP_MAX_SCALE = Math.max(CURRENT_CROP_MIN_SCALE * 6, 3);
-
-    CURRENT_CROP_SCALE = CURRENT_CROP_MIN_SCALE;
-    centerCropImage();
-
-    if(zoom){
-      zoom.min = String(CURRENT_CROP_MIN_SCALE);
-      zoom.max = String(CURRENT_CROP_MAX_SCALE);
-      zoom.step = String(Math.max(CURRENT_CROP_MIN_SCALE / 100, 0.01));
-      zoom.value = String(CURRENT_CROP_SCALE);
-    }
-
+    if(zoom) zoom.value = "1";
     drawCropCanvas();
     showModal("cropBack", true);
   };
@@ -2175,8 +2015,6 @@ function drawCropCanvas(){
 
   ctx.clearRect(0, 0, cw, ch);
 
-  clampCropPosition();
-
   const scale = CURRENT_CROP_SCALE;
   const drawW = img.width * scale;
   const drawH = img.height * scale;
@@ -2184,25 +2022,16 @@ function drawCropCanvas(){
   const x = (cw - drawW) / 2 + CURRENT_CROP_X;
   const y = (ch - drawH) / 2 + CURRENT_CROP_Y;
 
-  const { cropX, cropY, cropW, cropH } = getCropRect();
-
-  // fundo
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, cw, ch);
-
-  // imagem
+  // desenha a imagem inteira sem escurecer
   ctx.drawImage(img, x, y, drawW, drawH);
 
-  // escurece fora da área de corte
-  ctx.save();
-  ctx.fillStyle = "rgba(0,0,0,0.38)";
-  ctx.beginPath();
-  ctx.rect(0, 0, cw, ch);
-  ctx.rect(cropX, cropY, cropW, cropH);
-  ctx.fill("evenodd");
-  ctx.restore();
+  // área de corte
+  const cropW = Math.min(520, cw - 60);
+  const cropH = Math.round(cropW * 0.72);
+  const cropX = (cw - cropW) / 2;
+  const cropY = (ch - cropH) / 2;
 
-  // borda da área de corte
+  // só a borda da área de corte
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 2;
   ctx.strokeRect(cropX, cropY, cropW, cropH);
@@ -2213,12 +2042,13 @@ function applyCropResult(){
   const img = CURRENT_CROP_IMG;
   if(!canvas || !img || !CURRENT_CROP_TARGET) return;
 
-  clampCropPosition();
-
   const cw = canvas.width;
   const ch = canvas.height;
 
-  const { cropX, cropY, cropW, cropH } = getCropRect();
+  const cropW = Math.min(520, cw - 60);
+  const cropH = Math.round(cropW * 0.72);
+  const cropX = (cw - cropW) / 2;
+  const cropY = (ch - cropH) / 2;
 
   const scale = CURRENT_CROP_SCALE;
   const drawW = img.width * scale;
@@ -2227,10 +2057,10 @@ function applyCropResult(){
   const x = (cw - drawW) / 2 + CURRENT_CROP_X;
   const y = (ch - drawH) / 2 + CURRENT_CROP_Y;
 
-  const sx = Math.max(0, (cropX - x) / scale);
-  const sy = Math.max(0, (cropY - y) / scale);
-  const sw = Math.min(img.width - sx, cropW / scale);
-  const sh = Math.min(img.height - sy, cropH / scale);
+  const sx = (cropX - x) / scale;
+  const sy = (cropY - y) / scale;
+  const sw = cropW / scale;
+  const sh = cropH / scale;
 
   const out = document.createElement("canvas");
   out.width = 1200;
@@ -2246,15 +2076,14 @@ function applyCropResult(){
   );
 
   const result = out.toDataURL("image/jpeg", 0.92);
-
   if(String(CURRENT_CROP_TARGET || "").startsWith("cat:")){
-    CROPPED_CATEGORY_IMAGES[CURRENT_CROP_TARGET] = result;
-  }else{
-    CROPPED_IMAGES[CURRENT_CROP_TARGET] = result;
-    if(CURRENT_CROP_TARGET === "eImgFile1" || CURRENT_CROP_TARGET === "eImgFile2"){
-      setTimeout(renderEditImagePreviews, 30);
-    }
-  }
+  CROPPED_CATEGORY_IMAGES[CURRENT_CROP_TARGET] = result;
+}else{
+  CROPPED_IMAGES[CURRENT_CROP_TARGET] = result;
+  if(CURRENT_CROP_TARGET === "eImgFile1" || CURRENT_CROP_TARGET === "eImgFile2"){
+  setTimeout(renderEditImagePreviews, 30);
+   }
+}
 
   closeCropModal();
   toast("Imagem cortada ✅");
@@ -3134,7 +2963,6 @@ if(f2 && !img2){
     featured, stock_enabled, stock_qty, low_stock_alert,
     paused, image_url, images,
     addons: readAddonsEditor("pAddonsList"),
-    flavors: readFlavorsEditor("pFlavorsList"),
     discount_percent: Number($("pDiscount")?.value || 0)
   };
 
@@ -3167,7 +2995,6 @@ if(f2 && !img2){
   if($("pImgFile2")) $("pImgFile2").value = "";
   $("pDiscount").value = "0";
   fillAddonsEditor("pAddonsList", []);
-  fillFlavorsEditor("pFlavorsList", []);
 
   toast("Produto cadastrado ✅");
   await loadCategories();
@@ -3247,7 +3074,7 @@ function openEdit(id){
 
   $("eStatus").textContent = "";
   fillAddonsEditor("eAddonsList", editingCurrent.addons || []);
-  fillFlavorsEditor("eFlavorsList", editingCurrent.flavors || []);
+
   editingCurrent.__editImages = editImages;
 
   EDIT_REMOVE_IMAGE_1 = false;
@@ -3285,7 +3112,6 @@ async function saveEdit(){
     low_stock_alert: Number($("eLowStock").value || 5),
     paused: ($("ePaused").value === "true"),
     addons: readAddonsEditor("eAddonsList"),
-    flavors: readFlavorsEditor("eFlavorsList"),
     discount_percent: Number($("eDiscount")?.value || 0)
   };
 
@@ -3710,7 +3536,13 @@ async function deleteProduct(){
           <div class="item" role="button" tabindex="0" data-client="${c.id}" style="${selected ? "outline:2px solid rgba(122,74,62,.35)" : ""}">
             <div class="itemLeft">
               <div class="itemTitle">${escapeHtml(c.name || "Cliente")}</div>
-              <div class="itemSub">${escapeHtml(c.phone||"")}<br/>${escapeHtml(c.address||"")}</div>
+              <div class="itemSub">${escapeHtml(c.phone||"")}<br/>${
+  escapeHtml(
+    typeof c.address === "string"
+      ? c.address
+      : (c.address?.street || "")
+  )
+}</div>
             </div>
             <div class="itemRight">
               <span class="pill">${Array.isArray(c.coupons)?c.coupons.filter(x=>x && x.active!==false).length:0} cupom(ns)</span>
@@ -3751,7 +3583,10 @@ async function deleteProduct(){
       creatingNewClient = false;
       $("cName").value = c.name || "";
       $("cPhone").value = c.phone || "";
-      $("cAddr").value = c.address || "";
+      $("cAddr").value =
+      typeof c.address === "string"
+    ? c.address
+    : (c.address?.street || "");
       renderCoupons(c);
       loadClientOrders(c.phone);
       renderClients();
@@ -4205,10 +4040,7 @@ async function savePdvPrefs(){
 }
 
    // ====== EVENTS ======
-    document.addEventListener("DOMContentLoaded", async ()=>{ 
-    setupCropCanvasDrag();
-
-
+document.addEventListener("DOMContentLoaded", async ()=>{ 
   try{
     await ensureAdminAuth();
     unlockAdminUI();
@@ -4260,9 +4092,7 @@ $("uiLogoImg")?.addEventListener("change", async ()=>{
     alert("Não foi possível ler a imagem da logo.");
   }
 });
-  
-  $("pFlavorsAdd")?.addEventListener("click", ()=> addFlavorRow("pFlavorsList"));
-  $("eFlavorsAdd")?.addEventListener("click", ()=> addFlavorRow("eFlavorsList"));
+
 
   $("saveStoreUi")?.addEventListener("click", saveStoreUi);
 
@@ -4295,9 +4125,6 @@ bindCropInputById("eImgFile1");
 bindCropInputById("eImgFile2");
 
 
-
-
-
 $("eImgFile1")?.addEventListener("change", ()=>{
   EDIT_REMOVE_IMAGE_1 = false;
   setTimeout(renderEditImagePreviews, 60);
@@ -4327,21 +4154,15 @@ $("eRemoveImg2")?.addEventListener("click", ()=>{
 $("closeCropBtn")?.addEventListener("click", closeCropModal);
 $("applyCropBtn")?.addEventListener("click", applyCropResult);
 $("resetCropBtn")?.addEventListener("click", ()=>{
-  CURRENT_CROP_SCALE = CURRENT_CROP_MIN_SCALE;
-  centerCropImage();
-
-  const zoom = $("cropZoom");
-  if(zoom) zoom.value = String(CURRENT_CROP_SCALE);
-
+  CURRENT_CROP_SCALE = 1;
+  CURRENT_CROP_X = 0;
+  CURRENT_CROP_Y = 0;
+  if($("cropZoom")) $("cropZoom").value = "1";
   drawCropCanvas();
 });
 
 $("cropZoom")?.addEventListener("input", ()=>{
-  const zoom = $("cropZoom");
-  if(!zoom) return;
-
-  CURRENT_CROP_SCALE = Number(zoom.value || CURRENT_CROP_MIN_SCALE);
-  clampCropPosition();
+  CURRENT_CROP_SCALE = Number($("cropZoom").value || 1);
   drawCropCanvas();
 });
 
@@ -5385,7 +5206,7 @@ document.getElementById("pdvStoreBack")?.addEventListener("click", (e)=>{
     <div class="mBody">
       <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;" id="cropGrid">
         <div style="background:#111;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:340px;">
-          <canvas id="cropCanvas" width="900" height="600" style="width:100%;max-width:100%;display:block;background:#111;pointer-events:auto;"></canvas>
+          <canvas id="cropCanvas" width="900" height="600" style="width:100%;max-width:100%;display:block;background:#111;"></canvas>
         </div>
 
         <div>
