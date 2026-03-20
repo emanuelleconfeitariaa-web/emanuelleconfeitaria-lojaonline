@@ -28,6 +28,7 @@ let DYNAMIC_SHIPPING = null;
 let FEATURED_CATS = new Set();
 let SHIPPING_QUOTE_TIMER = null;
 let CUSTOMER_GEO = null; // { lat, lon }
+let CUSTOMER_LOCATION = null;
 
 function setVal(id, v){
   const el = document.getElementById(id);
@@ -1499,8 +1500,12 @@ function whatsappMessage(order){
   lines.push(`*Nome:* ${name}`);
   lines.push(`*Telefone:* ${phone}`);
   if(service.toLowerCase() === "delivery" || String(order.type||"").toUpperCase()==="ENTREGA"){
-    lines.push(`*Endereço:* ${addr}`);
+  lines.push(`*Endereço:* ${addr}`);
+
+  if(order.location && order.location.lat && order.location.lng){
+    lines.push(`*Localização:* https://maps.google.com/?q=${order.location.lat},${order.location.lng}`);
   }
+}
   if(notes){
     lines.push(`*Observações:* ${notes}`);
   }
@@ -1585,6 +1590,10 @@ const payload = {
   customer_phone: phone,
   address: (type === "ENTREGA") ? address : "", // garante vazio se retirada
   payment,
+  location: CUSTOMER_LOCATION ? {
+  lat: Number(CUSTOMER_LOCATION.lat),
+  lng: Number(CUSTOMER_LOCATION.lng)
+} : null,
   notes,
   need_nfce,
   cpf,
