@@ -1449,15 +1449,27 @@ function paymentMethodLabel(order){
 }
 
 function buildPreviewLink(order){
-  // URL pública para o preview do WhatsApp (GitHub Pages)
-  const base = (SETTINGS && (SETTINGS.preview_whatsapp_url || SETTINGS.preview_url || SETTINGS.whatsapp_preview_url)) || "";
+  const base = (SETTINGS && (
+    SETTINGS.preview_whatsapp_url ||
+    SETTINGS.preview_url ||
+    SETTINGS.whatsapp_preview_url
+  )) || "";
+
   if(!base) return "";
-  const clean = String(base).replace(/\/+$/,"");
-  // aceita que base já seja a página completa (pedido.html) ou uma pasta
+
+  const clean = String(base).replace(/\/+$/, "");
   const isHtml = clean.toLowerCase().endsWith(".html");
-  return isHtml
-    ? `${clean}?id=${encodeURIComponent(order.id)}`
-    : `${clean}/pedido.html?id=${encodeURIComponent(order.id)}`;
+
+  const url = new URL(
+    isHtml
+      ? clean
+      : `${clean}/pedido.html`
+  );
+
+  if(order?.id) url.searchParams.set("id", order.id);
+  url.searchParams.set("v", "3");
+
+  return url.toString();
 }
 
 function storeUrlLabel(){
@@ -1600,11 +1612,13 @@ const res = await fetch(API + "/api/orders", {
       }
 
       
-      const preview = buildPreviewLink(data.order);
-      const bodyMsg = whatsappMessage(data.order);
-      const msg = preview ? `${preview}
+const preview = buildPreviewLink(data.order);
+const bodyMsg = whatsappMessage(data.order);
 
-${bodyMsg}` : bodyMsg;
+// importante: o link precisa ficar sozinho no topo
+const msg = preview
+  ? `${preview}\n\n${bodyMsg}`
+  : bodyMsg;
 
       const to = phoneOnly(SETTINGS.whatsapp_number || "");
       const url = to
