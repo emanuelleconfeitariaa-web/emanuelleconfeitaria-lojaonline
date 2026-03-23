@@ -1406,6 +1406,33 @@ body{
 }
 
 
+#storeClosedNotice{
+  display:none;
+  margin: 10px 12px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 193, 7, 0.16);
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  color: #5c4300;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+#storeClosedNotice strong{
+  font-weight: 1000;
+}
+
+@media (max-width: 768px){
+  #storeClosedNotice{
+    margin: 10px 10px 0;
+    font-size: 12.5px;
+    border-radius: 12px;
+  }
+}
+
+
+    
 
 
 /* ações do modal informação (sem conflito com CSS existente) */
@@ -2028,6 +2055,9 @@ body{
 
 
       </div>
+
+
+      <div id="storeClosedNotice" style="display:none;"></div>
 
       <!-- BUSCA + ÍCONES -->
       <div class="tools" id="toolsBar">
