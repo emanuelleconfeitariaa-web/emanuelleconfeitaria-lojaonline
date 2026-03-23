@@ -1144,10 +1144,10 @@ async function quoteShippingByAddress(){
     return;
   }
 
-  if(!CUSTOMER_GEO && !address){
+  if(!address){
     DYNAMIC_SHIPPING = null;
     if(msg){
-      msg.textContent = "Informe o endereço ou use sua localização para calcular o frete.";
+      msg.textContent = "Informe o endereço para calcular o frete.";
       msg.style.display = "block";
     }
     renderCart();
@@ -1160,9 +1160,14 @@ async function quoteShippingByAddress(){
   }
 
   try{
-    const payload = CUSTOMER_GEO
-      ? { lat: CUSTOMER_GEO.lat, lon: CUSTOMER_GEO.lon }
-      : { address };
+    const payload = { address };
+
+    if (window.CUSTOMER_LOCATION) {
+      payload.location = {
+        lat: Number(window.CUSTOMER_LOCATION.lat),
+        lng: Number(window.CUSTOMER_LOCATION.lng)
+      };
+    }
 
     const res = await fetch(API + "/api/shipping/quote", {
       method: "POST",
@@ -1176,8 +1181,7 @@ async function quoteShippingByAddress(){
       DYNAMIC_SHIPPING = null;
 
       if(msg){
-        const err = (data && data.error) ? data.error : "Não foi possível calcular o frete.";
-        msg.textContent = err;
+        msg.textContent = "Não conseguimos identificar sua localização. Vamos informar o valor da entrega no WhatsApp.";
         msg.style.display = "block";
       }
 
@@ -1198,7 +1202,7 @@ async function quoteShippingByAddress(){
     DYNAMIC_SHIPPING = null;
 
     if(msg){
-      msg.textContent = "Erro ao calcular frete.";
+      msg.textContent = "Não conseguimos identificar sua localização. Vamos informar o valor da entrega no WhatsApp.";
       msg.style.display = "block";
     }
 
@@ -1564,10 +1568,9 @@ function whatsappMessage(order){
         }
       }
 
-
-      if(type === "ENTREGA" && DYNAMIC_SHIPPING === null){
-       return alert("Informe um endereço válido para calcular o frete.");
-        }
+if(type==="ENTREGA" && !address){
+  return alert("Informe o endereço.");
+}
       if(!name) return alert("Informe seu nome.");
       if(!phone) return alert("Informe seu WhatsApp.");
       if(type==="ENTREGA" && !address) return alert("Informe o endereço.");
@@ -1600,6 +1603,7 @@ const payload = {
   scheduled_for,
   shipping: Number(t.shipping || 0),
   subtotal: Number(t.subtotal || 0),
+  shipping: Number(DYNAMIC_SHIPPING ?? 0),
   total: Number(t.total || 0),
   customer_location: CUSTOMER_GEO ? {
   lat: Number(CUSTOMER_GEO.lat),
