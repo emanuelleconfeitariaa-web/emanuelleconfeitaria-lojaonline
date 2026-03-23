@@ -1510,6 +1510,14 @@ function whatsappMessage(order){
     lines.push(`*Localização:* https://maps.google.com/?q=${order.location.lat},${order.location.lng}`);
   }
 }
+
+if(service.toLowerCase() === "delivery" || String(order.type||"").toUpperCase()==="ENTREGA"){
+  lines.push(`*Endereço:* ${addr}`);
+
+  if(order.shipping === 0){
+    lines.push(`*Frete:* A confirmar no WhatsApp`);
+  }
+}
   if(notes){
     lines.push(`*Observações:* ${notes}`);
   }
