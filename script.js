@@ -589,6 +589,43 @@ function updateModalPrice(){
 }
 
 
+
+function updateClosedNotice(){
+  const box = $("storeClosedNotice");
+  if(!box) return;
+
+  const bh = SETTINGS?.business_hours;
+  const openNow = isOpenNow();
+
+  if(!bh?.enabled || openNow.ok){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+
+  const allowSchedule = !!(bh && bh.allow_schedule !== false);
+  const sug = nextOpenSuggestion();
+
+  let msg = `<strong>No momento estamos fora do horário de funcionamento.</strong>`;
+
+  if(allowSchedule){
+    msg += ` Você pode fazer seu pedido e agendar a entrega ou retirada.`;
+  }else{
+    msg += ` Você pode ver o cardápio, mas os pedidos serão atendidos no próximo horário disponível.`;
+  }
+
+  if(sug?.date && sug?.time){
+    const [yy, mm, dd] = String(sug.date).split("-");
+    const nextDate = `${dd}/${mm}/${yy}`;
+    msg += ` <br>Próximo horário: <strong>${nextDate} às ${sug.time}</strong>.`;
+  }
+
+  box.innerHTML = msg;
+  box.style.display = "block";
+}
+
+
+
     function isOpenNow(){
       const bh = SETTINGS?.business_hours;
       if(!bh?.enabled) return { ok:true };
@@ -673,6 +710,7 @@ if(useImg && img){
         $("statusPill").querySelector(".dot").style.background = "#ff6a6a";
       }
 
+        updateClosedNotice();
       // mostra/oculta busca
       $("toolsBar").style.display = (ui.show_search === false) ? "none" : "flex";
     }
