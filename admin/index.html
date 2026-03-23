@@ -5029,15 +5029,12 @@ function openPdvStore(){
 function closePdvStore(){
   const back = document.getElementById("pdvStoreBack");
   const frame = document.getElementById("pdvStoreFrame");
+  if(!back || !frame) return;
+
   back.classList.remove("open");
-  frame.src = ""; // limpa
-
-  // ✅ opcional: volta foco pro admin
-  setTimeout(()=> {
-    document.getElementById("openCreateOrder")?.focus();
-  }, 50);
+  back.style.display = "none";
+  frame.src = "";
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnClose = document.getElementById("pdvStoreClose");
