@@ -626,6 +626,71 @@ function updateClosedNotice(){
 
 
 
+
+
+function openClosedNotice(){
+  const back = $("closedNoticeBack");
+  if(back) back.classList.add("open");
+}
+
+function closeClosedNotice(){
+  const back = $("closedNoticeBack");
+  if(back) back.classList.remove("open");
+}
+
+function updateClosedNoticeModal(){
+  const textEl = $("closedNoticeText");
+  if(!textEl) return;
+
+  const bh = SETTINGS?.business_hours;
+  const openNow = isOpenNow();
+
+  if(!bh?.enabled || openNow.ok){
+    closeClosedNotice();
+    return;
+  }
+
+  const allowSchedule = !!(bh && bh.allow_schedule !== false);
+  const sug = nextOpenSuggestion();
+
+  let html = `
+    <div style="font-weight:1000; margin-bottom:8px;">
+      No momento estamos fora do horário de funcionamento.
+    </div>
+  `;
+
+  if(allowSchedule){
+    html += `
+      <div>
+        Você ainda pode fazer seu pedido e <b>agendar</b> a retirada ou entrega.
+      </div>
+    `;
+  }else{
+    html += `
+      <div>
+        Você pode ver o cardápio, mas os pedidos serão atendidos no próximo horário disponível.
+      </div>
+    `;
+  }
+
+  if(sug?.date && sug?.time){
+    const [yy, mm, dd] = String(sug.date).split("-");
+    html += `
+      <div style="margin-top:10px;">
+        Próximo horário disponível: <b>${dd}/${mm}/${yy} às ${sug.time}</b>
+      </div>
+    `;
+  }
+
+  textEl.innerHTML = html;
+  openClosedNotice();
+}
+
+
+
+
+
+
     function isOpenNow(){
       const bh = SETTINGS?.business_hours;
       if(!bh?.enabled) return { ok:true };
@@ -715,7 +780,7 @@ if(useImg && img){
       $("toolsBar").style.display = (ui.show_search === false) ? "none" : "flex";
     }
 
-
+       updateClosedNoticeModal();
 
 
 function getProductImages(p){
@@ -2127,6 +2192,15 @@ $("prodMinus").addEventListener("click", ()=>{
 $("prodPlus").addEventListener("click", ()=>{
   if(!MODAL_PRODUCT) return;
 
+
+$("closeClosedNotice")?.addEventListener("click", closeClosedNotice);
+$("okClosedNotice")?.addEventListener("click", closeClosedNotice);
+
+$("closedNoticeBack")?.addEventListener("click", (e)=>{
+  if(e.target === $("closedNoticeBack")) closeClosedNotice();
+});
+
+  
   // respeita estoque
   if(MODAL_PRODUCT.stock_enabled){
     const max = Number(MODAL_PRODUCT.stock_qty||0);
