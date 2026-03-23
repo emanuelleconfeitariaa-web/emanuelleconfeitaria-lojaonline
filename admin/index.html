@@ -4364,13 +4364,10 @@ payload.business_hours = {
 
       $("testSoundBtn").addEventListener("click", playNotify);
 
-      $("openStoreBtn").addEventListener("click", async ()=>{
-        try{
-          await "https://emanuelleconfeitariaa-web.github.io/emanuelleconfeitaria-lojaonline".openStore();
-        }catch{
-          alert("Não foi possível abrir a loja (preload não disponível).");
-        }
-      });
+$("openStoreBtn").addEventListener("click", ()=>{
+  const storeUrl = "../";
+  window.open(storeUrl, "_blank", "noopener,noreferrer");
+});
 
       // produtos
       $("saveProductBtn").addEventListener("click", createProduct);
