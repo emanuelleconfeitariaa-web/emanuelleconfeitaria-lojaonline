@@ -5004,11 +5004,26 @@ document.addEventListener("click", (e)=>{
 function openPdvStore(){
   const back = document.getElementById("pdvStoreBack");
   const frame = document.getElementById("pdvStoreFrame");
+  if(!back || !frame) return;
 
-  // carrega a LOJA em modo PDV
-  frame.src = "../store/index.html?pdv=1&t=" + Date.now();
+  const host = window.location.hostname;
+  const protocol = window.location.protocol;
+
+  // admin local / electron
+  if(
+    protocol === "file:" ||
+    host === "127.0.0.1" ||
+    host === "localhost" ||
+    host === ""
+  ){
+    frame.src = "../store/index.html?pdv=1&t=" + Date.now();
+  }else{
+    // admin online
+    frame.src = "https://emanuelleconfeitariaa-web.github.io/emanuelle-loja/?pdv=1&t=" + Date.now();
+  }
 
   back.classList.add("open");
+  back.style.display = "flex";
 }
 
 function closePdvStore(){
