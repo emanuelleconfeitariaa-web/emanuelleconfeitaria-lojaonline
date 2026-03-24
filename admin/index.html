@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -437,21 +438,318 @@
   z-index: 20010 !important;
 }
 
-
 #cropCanvas{
   touch-action: none;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #cropCanvas.dragging{
   cursor: grabbing;
 }
-
 @media (max-width: 760px){
   #cropGrid{
     grid-template-columns: 1fr !important;
   }
 }
+
+
+
+.activeView{
+  background: var(--primary) !important;
+  color:#fff !important;
+  border-color: rgba(0,0,0,.06) !important;
+}
+
+
+
+
+
+
+
+
+
+
+.spCards{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:12px;
+  margin-top:14px;
+}
+
+.spCard{
+  border:1px solid rgba(0,0,0,.10);
+  border-radius:18px;
+  padding:14px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+}
+
+.spCardLabel{
+  font-size:12px;
+  color: var(--muted);
+  font-weight:900;
+}
+
+.spCardValue{
+  font-size:28px;
+  font-weight:1000;
+  margin-top:8px;
+  line-height:1.05;
+}
+
+.spCardHint{
+  margin-top:6px;
+  font-size:12px;
+  color: var(--muted);
+}
+
+.spCard.blue{ background: linear-gradient(180deg, rgba(66,133,244,.10), rgba(255,255,255,.96)); }
+.spCard.green{ background: linear-gradient(180deg, rgba(52,168,83,.10), rgba(255,255,255,.96)); }
+.spCard.orange{ background: linear-gradient(180deg, rgba(251,188,5,.12), rgba(255,255,255,.96)); }
+.spCard.purple{ background: linear-gradient(180deg, rgba(123,97,255,.10), rgba(255,255,255,.96)); }
+.spCard.red{ background: linear-gradient(180deg, rgba(234,67,53,.10), rgba(255,255,255,.96)); }
+
+.spChartWrap{
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:16px 12px 10px;
+  background: rgba(255,255,255,.75);
+}
+
+.spChartGrid{
+  height:220px;
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  border-bottom:1px solid rgba(0,0,0,.08);
+  padding:8px 0 0;
+}
+
+.spBarCol{
+  flex:1;
+  min-width:22px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.spBar{
+  width:100%;
+  max-width:34px;
+  border-radius:12px 12px 0 0;
+  background: var(--primary);
+  transition: transform .15s ease, filter .15s ease;
+}
+
+.spBar:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.spBarLabel{
+  font-size:11px;
+  color: var(--muted);
+  white-space:nowrap;
+}
+
+.spLegend{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+
+.spLegend .muted{
+  margin:0;
+}
+
+.spRankList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.spRankItem{
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:14px;
+  padding:12px;
+  background: rgba(255,255,255,.85);
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.spRankPos{
+  width:32px;
+  height:32px;
+  border-radius:12px;
+  background: rgba(122,74,62,.10);
+  color: var(--primary);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:1000;
+  flex:0 0 32px;
+}
+
+.spRankMain{
+  flex:1;
+  min-width:0;
+}
+
+.spRankTitle{
+  font-weight:1000;
+}
+
+.spRankSub{
+  font-size:12px;
+  color: var(--muted);
+  margin-top:4px;
+}
+
+.spTableWrap{
+  overflow:auto;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:16px;
+}
+
+.spTable{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+  background:#fff;
+}
+
+.spTable th{
+  text-align:left;
+  padding:12px 10px;
+  background: rgba(246,235,229,.75);
+  border-bottom:1px solid rgba(0,0,0,.08);
+  white-space:nowrap;
+}
+
+.spTable td{
+  padding:12px 10px;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  vertical-align:top;
+}
+
+.spTable tr:hover{
+  background: rgba(122,74,62,.04);
+}
+
+.spTable .num{
+  text-align:right;
+  white-space:nowrap;
+}
+
+.activeView{
+  background: var(--primary) !important;
+  color:#fff !important;
+  border-color: rgba(0,0,0,.06) !important;
+}
+
+@media(max-width: 760px){
+  .spCardValue{
+    font-size:22px;
+  }
+
+  .spChartGrid{
+    gap:6px;
+    height:220px;
+  }
+
+  .spBar{
+    max-width:24px;
+  }
+}
+
+
+
+
+.adminLayout{
+  display:grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.sideNav{
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 16px 12px;
+  background: rgba(255,255,255,.72);
+  border-right: 1px solid rgba(0,0,0,.08);
+  backdrop-filter: blur(10px);
+  overflow:auto;
+}
+
+.sideBrand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding: 8px 8px 16px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  margin-bottom: 14px;
+}
+
+.sideTabs{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.sideTabs .tab{
+  width:100%;
+  justify-content:flex-start;
+  border-radius:14px;
+  padding:12px 14px;
+}
+
+.mainArea{
+  min-width:0;
+}
+
+.mainArea .wrap{
+  max-width: 1400px;
+  margin: 18px auto;
+  padding: 0 16px 28px;
+}
+
+@media(max-width: 980px){
+  .adminLayout{
+    grid-template-columns: 1fr;
+  }
+
+  .sideNav{
+    position: relative;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+  }
+
+  .sideTabs{
+    flex-direction:row;
+    flex-wrap:wrap;
+  }
+
+  .sideTabs .tab{
+    width:auto;
+  }
+}
+
+
+
+
+
 
 
 
@@ -469,31 +767,45 @@
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <div class="logoBox"><img id="adminLogoImg" src="../assets/logo.png" alt="Logo"></div>
-        <div class="ttl">
-          <b id="shopName">Emanuelle Confeitaria</b>
-          <div>Admin • Pedidos • Produtos • Página de Vendas • Histórico • Clientes</div>
-        </div>
-      </div>
-      <div class="actions">
-        <button class="btn btnGhost" id="refreshBtn">Atualizar</button>
-        <button class="btn btnGhost" id="testSoundBtn">Testar Som</button>
-        <button class="btn btnPrimary" id="openStoreBtn">Abrir Página de Vendas</button>
+<div class="adminLayout">
+  <aside class="sideNav">
+    <div class="sideBrand">
+      <div class="logoBox"><img id="adminLogoImg" src="../assets/logo.png" alt="Logo"></div>
+      <div class="ttl">
+        <b id="shopName">Emanuelle Confeitaria</b>
+        <div>Admin do sistema</div>
       </div>
     </div>
 
-    <div class="tabs" id="tabs">
+    <div class="sideTabs" id="tabs">
       <div class="tab active" data-tab="pdv">🧾 Pedidos / PDV <span class="badge" id="newBadge">0</span></div>
       <div class="tab" data-tab="products">🍰 Produtos / Cardápio</div>
       <div class="tab" data-tab="store">🎨 Página de Vendas</div>
       <div class="tab" data-tab="history">📊 Histórico</div>
       <div class="tab" data-tab="clients">👥 Clientes</div>
       <div class="tab" data-tab="settings">⚙️ Configurações</div>
-     <div class="tab" data-tab="delivery">🚚 Configuração de entrega</div>
+      <div class="tab" data-tab="delivery">🚚 Configuração de entrega</div>
+      <div class="tab" data-tab="salesperf">📈 Performance de Vendas</div>
     </div>
+  </aside>
+
+  <main class="mainArea">
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="logoBox"><img id="adminLogoImgTop" src="../assets/logo.png" alt="Logo"></div>
+          <div class="ttl">
+            <b id="shopNameTop">Emanuelle Confeitaria</b>
+            <div>Admin • Pedidos • Produtos • Relatórios</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btnGhost" id="refreshBtn">Atualizar</button>
+          <button class="btn btnGhost" id="testSoundBtn">Testar Som</button>
+          <button class="btn btnPrimary" id="openStoreBtn">Abrir Página de Vendas</button>
+        </div>
+      </div>
 
 
 
@@ -605,6 +917,11 @@
             <div class="muted">Ex.: Cobertura de chocolate (+5,00)</div>
             <div id="pAddonsList" class="addonsList"></div>
             <button class="btn btnGhost" type="button" id="pAddonsAdd" style="margin-top:8px;width:100%;">+ Adicionar adicional</button>
+
+            <label style="margin-top:12px">Sabores (obrigatório escolher 1 na loja, se existir)</label>
+            <div class="muted">Ex.: Morango, Chocolate, Nuvem Doce</div>
+            <div id="pFlavorsList" class="addonsList"></div>
+            <button class="btn btnGhost" type="button" id="pFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
 
 <label>Imagens do produto</label>
 
@@ -1088,6 +1405,112 @@
 </div>
 
 
+<!-- performace de vendas -->
+
+<section id="tab_salesperf" style="display:none;">
+  <div class="card" style="grid-column:1/-1;">
+    <div class="line" style="align-items:flex-end;flex-wrap:wrap;">
+      <div>
+        <h3 style="margin:0;">Performance de Vendas</h3>
+        <div class="muted" style="margin-top:4px;">Resumo geral, gráfico, ranking e histórico de pedidos no mesmo lugar.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btnGhost" id="spTabOverview">Resumo</button>
+        <button class="btn btnGhost" id="spTabOrders">Histórico de pedidos</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px;align-items:end;flex-wrap:wrap;">
+      <div>
+        <label>Período</label>
+        <select id="spPeriod">
+          <option value="TODAY">Hoje</option>
+          <option value="WEEK">Últimos 7 dias</option>
+          <option value="MONTH" selected>Este mês</option>
+          <option value="CUSTOM">Personalizado</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Data inicial</label>
+        <input id="spFrom" type="date">
+      </div>
+
+      <div>
+        <label>Data final</label>
+        <input id="spTo" type="date">
+      </div>
+
+      <div style="min-width:180px;">
+        <button class="btn btnPrimary" id="spRefresh" style="width:100%;">Atualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="spOverviewWrap" style="grid-column:1/-1;">
+    <div id="spCards" class="spCards"></div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="line" style="margin-bottom:12px;flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0;">Gráfico de vendas</h3>
+          <div class="muted" id="spChartSubtitle" style="margin-top:4px;">Visualização do período selecionado.</div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="smallBtn" id="spMetricRevenue">Venda total</button>
+          <button class="smallBtn" id="spMetricOrders">Pedidos</button>
+          <button class="smallBtn" id="spMetricTicket">Ticket médio</button>
+        </div>
+      </div>
+
+      <div id="spChart"></div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="card">
+        <h3 style="margin-bottom:10px;">Produtos mais vendidos</h3>
+        <div id="spTopProducts"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:10px;">Clientes que mais pediram</h3>
+        <div id="spTopClients"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="spOrdersWrap" style="grid-column:1/-1;display:none;">
+    <div class="card">
+      <div class="line" style="margin-bottom:12px;flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0;">Histórico de pedidos</h3>
+          <div class="muted" style="margin-top:4px;">Clique em um pedido para abrir os detalhes.</div>
+        </div>
+
+        <div style="min-width:260px;">
+          <input id="spOrderSearch" placeholder="Buscar cliente, telefone, pedido...">
+        </div>
+      </div>
+
+      <div id="spOrdersTable"></div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1165,7 +1588,12 @@
 <label style="margin-top:12px">Adicionais (opcional)</label>
 <div class="muted">Ex.: Cobertura de chocolate (+5,00)</div>
 <div id="eAddonsList" class="addonsList"></div>
-<button class="btn btnGhost" type="button" id="eAddonsAdd" style="margin-top:8px;width:100%;">+ Adicionar adicional</button>
+<button class="btn btnGhost" type="button" id="eAddonsAdd" style="margin-top:8px;width:100%;">+ Adicional</button>
+
+<label style="margin-top:12px">Sabores</label>
+<div class="muted">Se houver sabores, a loja exigirá a escolha de 1 sabor.</div>
+<div id="eFlavorsList" class="addonsList"></div>
+<button class="btn btnGhost" type="button" id="eFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
 
 <label style="margin-top:12px">Imagens do produto</label>
 
@@ -1394,6 +1822,10 @@ function setValue(id, val){
     let ORDER_ALERT_ENABLED = false;
 
 
+    let SALES_PERF_VIEW = "OVERVIEW";
+    let SALES_PERF_METRIC = "REVENUE"; // REVENUE | ORDERS | TICKET
+
+    
 
 
     // som salvo (base64) dentro do settings
@@ -1463,9 +1895,101 @@ const CROPPED_IMAGES = {
 let CURRENT_CROP_TARGET = null;
 let CURRENT_CROP_IMG = null;
 let CURRENT_CROP_SCALE = 1;
+let CURRENT_CROP_MIN_SCALE = 1;
+let CURRENT_CROP_MAX_SCALE = 4;
 let CURRENT_CROP_X = 0;
 let CURRENT_CROP_Y = 0;
 
+
+
+
+function addFlavorRow(listId, flavor){
+  const list = document.getElementById(listId);
+  if(!list) return;
+
+  const value = String(flavor || "").trim();
+
+  const row = document.createElement("div");
+  row.className = "addonRow";
+  row.innerHTML = `
+    <input class="inp" data-flavor-name placeholder="Nome do sabor (ex: Chocolate)" value="${escapeAttr(value)}">
+    <div></div>
+    <button type="button" class="addonRemove" title="Remover">✕</button>
+  `;
+
+  row.querySelector(".addonRemove")?.addEventListener("click", ()=> row.remove());
+  list.appendChild(row);
+}
+
+function readFlavorsEditor(listId){
+  const list = document.getElementById(listId);
+  if(!list) return [];
+
+  const rows = Array.from(list.querySelectorAll(".addonRow"));
+  return rows
+    .map(r => (r.querySelector("[data-flavor-name]")?.value || "").trim())
+    .filter(Boolean);
+}
+
+function fillFlavorsEditor(listId, flavors){
+  const list = document.getElementById(listId);
+  if(!list) return;
+
+  list.innerHTML = "";
+  (flavors || []).forEach(f => addFlavorRow(listId, f));
+}
+
+
+
+
+function getCropRect(){
+  const canvas = $("cropCanvas");
+  if(!canvas){
+    return { cropX: 0, cropY: 0, cropW: 0, cropH: 0 };
+  }
+
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  const cropW = Math.min(520, cw - 60);
+  const cropH = Math.round(cropW * 0.72);
+  const cropX = (cw - cropW) / 2;
+  const cropY = (ch - cropH) / 2;
+
+  return { cropX, cropY, cropW, cropH };
+}
+
+function clampCropPosition(){
+  const canvas = $("cropCanvas");
+  const img = CURRENT_CROP_IMG;
+  if(!canvas || !img) return;
+
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  const { cropX, cropY, cropW, cropH } = getCropRect();
+
+  const drawW = img.width * CURRENT_CROP_SCALE;
+  const drawH = img.height * CURRENT_CROP_SCALE;
+
+  const baseX = (cw - drawW) / 2;
+  const baseY = (ch - drawH) / 2;
+
+  const minOffsetX = (cropX + cropW) - (baseX + drawW);
+  const maxOffsetX = cropX - baseX;
+
+  const minOffsetY = (cropY + cropH) - (baseY + drawH);
+  const maxOffsetY = cropY - baseY;
+
+  CURRENT_CROP_X = Math.min(maxOffsetX, Math.max(minOffsetX, CURRENT_CROP_X));
+  CURRENT_CROP_Y = Math.min(maxOffsetY, Math.max(minOffsetY, CURRENT_CROP_Y));
+}
+
+function centerCropImage(){
+  CURRENT_CROP_X = 0;
+  CURRENT_CROP_Y = 0;
+  clampCropPosition();
+}
 
 
 
@@ -1933,65 +2457,121 @@ $("saveDeliverySettingsBtn")?.addEventListener("click", async ()=>{
 });
 
 
-
-(function setupCropCanvasDrag(){
-  let dragging = false;
-  let startX = 0;
-  let startY = 0;
-
+function setupCropCanvasDrag(){
   const canvas = $("cropCanvas");
   if(!canvas) return;
 
-  const getPoint = (e) => {
-    if(e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    return { x: e.clientX, y: e.clientY };
-  };
+  if(canvas.dataset.dragBound === "1") return;
+  canvas.dataset.dragBound = "1";
 
-  const start = (e) => {
+  let dragging = false;
+  let pointerId = null;
+  let startClientX = 0;
+  let startClientY = 0;
+
+  function getPoint(e){
+    return {
+      x: e.clientX,
+      y: e.clientY
+    };
+  }
+
+  function startDrag(e){
     if(!CURRENT_CROP_IMG) return;
+    if(e.button !== undefined && e.button !== 0) return;
+
     dragging = true;
+    pointerId = e.pointerId ?? null;
     canvas.classList.add("dragging");
-    const p = getPoint(e);
-    startX = p.x;
-    startY = p.y;
-  };
 
-  const move = (e) => {
+    const p = getPoint(e);
+    startClientX = p.x;
+    startClientY = p.y;
+
+    try{
+      if(pointerId !== null) canvas.setPointerCapture(pointerId);
+    }catch(_e){}
+
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function moveDrag(e){
     if(!dragging) return;
-    const p = getPoint(e);
-    CURRENT_CROP_X += (p.x - startX);
-    CURRENT_CROP_Y += (p.y - startY);
-    startX = p.x;
-    startY = p.y;
-    drawCropCanvas();
-  };
+    if(pointerId !== null && e.pointerId != null && e.pointerId !== pointerId) return;
+    if(!CURRENT_CROP_IMG) return;
 
-  const end = () => {
+    const p = getPoint(e);
+    const dx = p.x - startClientX;
+    const dy = p.y - startClientY;
+
+    startClientX = p.x;
+    startClientY = p.y;
+
+    CURRENT_CROP_X += dx;
+    CURRENT_CROP_Y += dy;
+
+    clampCropPosition();
+    drawCropCanvas();
+
+    e.preventDefault();
+  }
+
+  function endDrag(e){
+    if(!dragging) return;
+    if(pointerId !== null && e?.pointerId != null && e.pointerId !== pointerId) return;
+
     dragging = false;
     canvas.classList.remove("dragging");
-  };
 
-  canvas.addEventListener("mousedown", start);
-  window.addEventListener("mousemove", move);
-  window.addEventListener("mouseup", end);
+    try{
+      if(pointerId !== null) canvas.releasePointerCapture(pointerId);
+    }catch(_e){}
 
-  canvas.addEventListener("touchstart", start, { passive:true });
-  window.addEventListener("touchmove", move, { passive:true });
-  window.addEventListener("touchend", end);
-})();
+    pointerId = null;
+  }
 
+  canvas.addEventListener("pointerdown", startDrag);
+  window.addEventListener("pointermove", moveDrag, { passive:false });
+  window.addEventListener("pointerup", endDrag, { passive:false });
+  window.addEventListener("pointercancel", endDrag, { passive:false });
+  canvas.addEventListener("dragstart", (e)=> e.preventDefault());
+}
 
 function openCropModal(targetKey, dataUrl){
   CURRENT_CROP_TARGET = targetKey;
-  CURRENT_CROP_SCALE = 1;
   CURRENT_CROP_X = 0;
   CURRENT_CROP_Y = 0;
 
   const img = new Image();
   img.onload = () => {
     CURRENT_CROP_IMG = img;
+
+    const canvas = $("cropCanvas");
     const zoom = $("cropZoom");
-    if(zoom) zoom.value = "1";
+    if(!canvas){
+      showModal("cropBack", true);
+      return;
+    }
+
+    const { cropW, cropH } = getCropRect();
+
+    const scaleToFillW = cropW / img.width;
+    const scaleToFillH = cropH / img.height;
+
+    CURRENT_CROP_MIN_SCALE = Math.max(scaleToFillW, scaleToFillH);
+    CURRENT_CROP_MAX_SCALE = Math.max(CURRENT_CROP_MIN_SCALE * 6, 3);
+
+    CURRENT_CROP_SCALE = CURRENT_CROP_MIN_SCALE;
+    centerCropImage();
+
+    if(zoom){
+      zoom.min = String(CURRENT_CROP_MIN_SCALE);
+      zoom.max = String(CURRENT_CROP_MAX_SCALE);
+      zoom.step = String(Math.max(CURRENT_CROP_MIN_SCALE / 100, 0.01));
+      zoom.value = String(CURRENT_CROP_SCALE);
+    }
+
     drawCropCanvas();
     showModal("cropBack", true);
   };
@@ -2015,6 +2595,8 @@ function drawCropCanvas(){
 
   ctx.clearRect(0, 0, cw, ch);
 
+  clampCropPosition();
+
   const scale = CURRENT_CROP_SCALE;
   const drawW = img.width * scale;
   const drawH = img.height * scale;
@@ -2022,16 +2604,25 @@ function drawCropCanvas(){
   const x = (cw - drawW) / 2 + CURRENT_CROP_X;
   const y = (ch - drawH) / 2 + CURRENT_CROP_Y;
 
-  // desenha a imagem inteira sem escurecer
+  const { cropX, cropY, cropW, cropH } = getCropRect();
+
+  // fundo
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, cw, ch);
+
+  // imagem
   ctx.drawImage(img, x, y, drawW, drawH);
 
-  // área de corte
-  const cropW = Math.min(520, cw - 60);
-  const cropH = Math.round(cropW * 0.72);
-  const cropX = (cw - cropW) / 2;
-  const cropY = (ch - cropH) / 2;
+  // escurece fora da área de corte
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.38)";
+  ctx.beginPath();
+  ctx.rect(0, 0, cw, ch);
+  ctx.rect(cropX, cropY, cropW, cropH);
+  ctx.fill("evenodd");
+  ctx.restore();
 
-  // só a borda da área de corte
+  // borda da área de corte
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 2;
   ctx.strokeRect(cropX, cropY, cropW, cropH);
@@ -2042,13 +2633,12 @@ function applyCropResult(){
   const img = CURRENT_CROP_IMG;
   if(!canvas || !img || !CURRENT_CROP_TARGET) return;
 
+  clampCropPosition();
+
   const cw = canvas.width;
   const ch = canvas.height;
 
-  const cropW = Math.min(520, cw - 60);
-  const cropH = Math.round(cropW * 0.72);
-  const cropX = (cw - cropW) / 2;
-  const cropY = (ch - cropH) / 2;
+  const { cropX, cropY, cropW, cropH } = getCropRect();
 
   const scale = CURRENT_CROP_SCALE;
   const drawW = img.width * scale;
@@ -2057,10 +2647,10 @@ function applyCropResult(){
   const x = (cw - drawW) / 2 + CURRENT_CROP_X;
   const y = (ch - drawH) / 2 + CURRENT_CROP_Y;
 
-  const sx = (cropX - x) / scale;
-  const sy = (cropY - y) / scale;
-  const sw = cropW / scale;
-  const sh = cropH / scale;
+  const sx = Math.max(0, (cropX - x) / scale);
+  const sy = Math.max(0, (cropY - y) / scale);
+  const sw = Math.min(img.width - sx, cropW / scale);
+  const sh = Math.min(img.height - sy, cropH / scale);
 
   const out = document.createElement("canvas");
   out.width = 1200;
@@ -2076,14 +2666,15 @@ function applyCropResult(){
   );
 
   const result = out.toDataURL("image/jpeg", 0.92);
+
   if(String(CURRENT_CROP_TARGET || "").startsWith("cat:")){
-  CROPPED_CATEGORY_IMAGES[CURRENT_CROP_TARGET] = result;
-}else{
-  CROPPED_IMAGES[CURRENT_CROP_TARGET] = result;
-  if(CURRENT_CROP_TARGET === "eImgFile1" || CURRENT_CROP_TARGET === "eImgFile2"){
-  setTimeout(renderEditImagePreviews, 30);
-   }
-}
+    CROPPED_CATEGORY_IMAGES[CURRENT_CROP_TARGET] = result;
+  }else{
+    CROPPED_IMAGES[CURRENT_CROP_TARGET] = result;
+    if(CURRENT_CROP_TARGET === "eImgFile1" || CURRENT_CROP_TARGET === "eImgFile2"){
+      setTimeout(renderEditImagePreviews, 30);
+    }
+  }
 
   closeCropModal();
   toast("Imagem cortada ✅");
@@ -2411,7 +3002,7 @@ function tabShow(key){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.querySelector(`.tab[data-tab="${key}"]`)?.classList.add("active");
 
-  ["pdv","products","store","history","clients","settings","delivery"].forEach(k=>{
+  ["pdv","products","store","history","clients","settings","delivery","salesperf"].forEach(k=>{
     const el = document.getElementById("tab_" + k);
     if(!el) return;
 
@@ -2963,6 +3554,7 @@ if(f2 && !img2){
     featured, stock_enabled, stock_qty, low_stock_alert,
     paused, image_url, images,
     addons: readAddonsEditor("pAddonsList"),
+    flavors: readFlavorsEditor("pFlavorsList"),
     discount_percent: Number($("pDiscount")?.value || 0)
   };
 
@@ -2995,6 +3587,7 @@ if(f2 && !img2){
   if($("pImgFile2")) $("pImgFile2").value = "";
   $("pDiscount").value = "0";
   fillAddonsEditor("pAddonsList", []);
+  fillFlavorsEditor("pFlavorsList", []);
 
   toast("Produto cadastrado ✅");
   await loadCategories();
@@ -3074,7 +3667,7 @@ function openEdit(id){
 
   $("eStatus").textContent = "";
   fillAddonsEditor("eAddonsList", editingCurrent.addons || []);
-
+  fillFlavorsEditor("eFlavorsList", editingCurrent.flavors || []);
   editingCurrent.__editImages = editImages;
 
   EDIT_REMOVE_IMAGE_1 = false;
@@ -3112,6 +3705,7 @@ async function saveEdit(){
     low_stock_alert: Number($("eLowStock").value || 5),
     paused: ($("ePaused").value === "true"),
     addons: readAddonsEditor("eAddonsList"),
+    flavors: readFlavorsEditor("eFlavorsList"),
     discount_percent: Number($("eDiscount")?.value || 0)
   };
 
@@ -3536,13 +4130,7 @@ async function deleteProduct(){
           <div class="item" role="button" tabindex="0" data-client="${c.id}" style="${selected ? "outline:2px solid rgba(122,74,62,.35)" : ""}">
             <div class="itemLeft">
               <div class="itemTitle">${escapeHtml(c.name || "Cliente")}</div>
-              <div class="itemSub">${escapeHtml(c.phone||"")}<br/>${
-  escapeHtml(
-    typeof c.address === "string"
-      ? c.address
-      : (c.address?.street || "")
-  )
-}</div>
+              <div class="itemSub">${escapeHtml(c.phone||"")}<br/>${escapeHtml(c.address||"")}</div>
             </div>
             <div class="itemRight">
               <span class="pill">${Array.isArray(c.coupons)?c.coupons.filter(x=>x && x.active!==false).length:0} cupom(ns)</span>
@@ -3583,10 +4171,7 @@ async function deleteProduct(){
       creatingNewClient = false;
       $("cName").value = c.name || "";
       $("cPhone").value = c.phone || "";
-      $("cAddr").value =
-      typeof c.address === "string"
-    ? c.address
-    : (c.address?.street || "");
+      $("cAddr").value = c.address || "";
       renderCoupons(c);
       loadClientOrders(c.phone);
       renderClients();
@@ -3677,6 +4262,365 @@ function renderDraftCoupons(){
     });
   });
 }
+
+
+
+
+function salesPerfRange(){
+  const period = $("spPeriod")?.value || "MONTH";
+  const now = new Date();
+
+  let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  let end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  if(period === "WEEK"){
+    start = new Date(end);
+    start.setDate(start.getDate() - 6);
+    start.setHours(0,0,0,0);
+  }else if(period === "MONTH"){
+    start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  }else if(period === "CUSTOM"){
+    const from = $("spFrom")?.value || "";
+    const to = $("spTo")?.value || "";
+    if(from) start = new Date(from + "T00:00:00");
+    if(to) end = new Date(to + "T23:59:59");
+  }
+
+  return { start, end, period };
+}
+
+function getSalesPerfOrders(){
+  const { start, end } = salesPerfRange();
+
+  return (ORDERS || []).filter(o=>{
+    const d = orderCreatedDate(o);
+    if(!d) return false;
+    return d >= start && d <= end;
+  });
+}
+
+function getCountableOrdersForPerf(list){
+  return (list || []).filter(o=>{
+    const st = statusUpper(o);
+    return st === "ACEITO" || st === "CONCLUIDO";
+  });
+}
+
+function fmtShortDate(d){
+  if(!(d instanceof Date) || !isFinite(d)) return "";
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  return `${dd}/${mm}`;
+}
+
+function renderSalesPerfCards(list){
+  const box = $("spCards");
+  if(!box) return;
+
+  const valid = getCountableOrdersForPerf(list);
+
+  const totalOrders = valid.length;
+  const revenue = valid.reduce((a,o)=> a + Number(orderSubtotal(o) || 0), 0);
+  const discounts = valid.reduce((a,o)=> a + Number(orderDiscount(o) || 0), 0);
+  const deliveryFees = valid.reduce((a,o)=> a + Number(orderShipping(o) || 0), 0);
+  const totalWithFees = valid.reduce((a,o)=> a + Number(orderTotal(o) || 0), 0);
+  const avgTicket = totalOrders ? (totalWithFees / totalOrders) : 0;
+
+  box.innerHTML = `
+    <div class="spCard blue">
+      <div class="spCardLabel">Faturamento total</div>
+      <div class="spCardValue">${money(revenue)}</div>
+      <div class="spCardHint">Sem contar taxa de entrega</div>
+    </div>
+
+    <div class="spCard green">
+      <div class="spCardLabel">Descontos</div>
+      <div class="spCardValue">${money(discounts)}</div>
+      <div class="spCardHint">Cupons e descontos aplicados</div>
+    </div>
+
+    <div class="spCard purple">
+      <div class="spCardLabel">Taxa de entrega</div>
+      <div class="spCardValue">${money(deliveryFees)}</div>
+      <div class="spCardHint">Total recebido em fretes</div>
+    </div>
+
+    <div class="spCard orange">
+      <div class="spCardLabel">Ticket médio</div>
+      <div class="spCardValue">${money(avgTicket)}</div>
+      <div class="spCardHint">Média por pedido</div>
+    </div>
+
+    <div class="spCard red">
+      <div class="spCardLabel">Nº total de pedidos</div>
+      <div class="spCardValue">${totalOrders}</div>
+      <div class="spCardHint">Pedidos aceitos e concluídos</div>
+    </div>
+  `;
+}
+
+function buildSalesPerfSeries(list){
+  const valid = getCountableOrdersForPerf(list);
+  const map = new Map();
+
+  valid.forEach(o=>{
+    const d = orderCreatedDate(o);
+    if(!d) return;
+
+    const key = dateKeyLocal(d);
+    const cur = map.get(key) || { revenue:0, orders:0 };
+
+    cur.revenue += Number(orderTotal(o) || 0);
+    cur.orders += 1;
+
+    map.set(key, cur);
+  });
+
+  const rows = [...map.entries()].sort((a,b)=> a[0].localeCompare(b[0]));
+
+  return rows.map(([key,info])=>{
+    const ticket = info.orders ? (info.revenue / info.orders) : 0;
+    return {
+      key,
+      date: new Date(key + "T12:00:00"),
+      revenue: info.revenue,
+      orders: info.orders,
+      ticket
+    };
+  });
+}
+
+function renderSalesPerfChart(list){
+  const box = $("spChart");
+  const subtitle = $("spChartSubtitle");
+  if(!box) return;
+
+  const rows = buildSalesPerfSeries(list);
+
+  let metricLabel = "Venda total";
+  let getValue = (x)=> x.revenue;
+  let formatter = (v)=> money(v);
+
+  if(SALES_PERF_METRIC === "ORDERS"){
+    metricLabel = "Pedidos";
+    getValue = (x)=> x.orders;
+    formatter = (v)=> `${v}`;
+  }else if(SALES_PERF_METRIC === "TICKET"){
+    metricLabel = "Ticket médio";
+    getValue = (x)=> x.ticket;
+    formatter = (v)=> money(v);
+  }
+
+  if(subtitle){
+    subtitle.textContent = `${metricLabel} no período selecionado.`;
+  }
+
+  $("spMetricRevenue")?.classList.toggle("activeView", SALES_PERF_METRIC === "REVENUE");
+  $("spMetricOrders")?.classList.toggle("activeView", SALES_PERF_METRIC === "ORDERS");
+  $("spMetricTicket")?.classList.toggle("activeView", SALES_PERF_METRIC === "TICKET");
+
+  if(!rows.length){
+    box.innerHTML = `<div class="muted">Sem vendas no período.</div>`;
+    return;
+  }
+
+  const max = Math.max(...rows.map(r => getValue(r)), 1);
+  const total = rows.reduce((a,r)=> a + getValue(r), 0);
+
+  box.innerHTML = `
+    <div class="spChartWrap">
+      <div class="spChartGrid">
+        ${rows.map(r=>{
+          const value = getValue(r);
+          const h = Math.max(8, Math.round((value / max) * 190));
+          return `
+            <div class="spBarCol">
+              <div class="spBar"
+                   title="${fmtShortDate(r.date)} • ${formatter(value)}"
+                   style="height:${h}px;"></div>
+              <div class="spBarLabel">${fmtShortDate(r.date)}</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+
+      <div class="spLegend">
+        <div class="muted"><b>Total:</b> ${formatter(total)}</div>
+        <div class="muted"><b>Pontos no gráfico:</b> ${rows.length}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSalesPerfTopProducts(list){
+  const box = $("spTopProducts");
+  if(!box) return;
+
+  const valid = getCountableOrdersForPerf(list);
+  const map = new Map();
+
+  valid.forEach(o=>{
+    orderItems(o).forEach(it=>{
+      const name = String(it.name || it.product_name || "Item").trim();
+      const qty = Number(it.qty || it.quantity || 0);
+      const price = Number(it.price || it.unit_price || 0);
+
+      const cur = map.get(name) || { qty:0, total:0 };
+      cur.qty += qty;
+      cur.total += qty * price;
+      map.set(name, cur);
+    });
+  });
+
+  const arr = [...map.entries()]
+    .map(([name,info])=>({ name, ...info }))
+    .sort((a,b)=> b.qty - a.qty || b.total - a.total)
+    .slice(0,10);
+
+  if(!arr.length){
+    box.innerHTML = `<div class="muted">Sem dados.</div>`;
+    return;
+  }
+
+  box.innerHTML = `<div class="spRankList">` + arr.map((p,i)=>`
+    <div class="spRankItem">
+      <div class="spRankPos">${i+1}º</div>
+      <div class="spRankMain">
+        <div class="spRankTitle">${escapeHtml(p.name)}</div>
+        <div class="spRankSub">${p.qty} item(ns) vendidos • ${money(p.total)}</div>
+      </div>
+    </div>
+  `).join("") + `</div>`;
+}
+
+function renderSalesPerfTopClients(list){
+  const box = $("spTopClients");
+  if(!box) return;
+
+  const valid = getCountableOrdersForPerf(list);
+  const map = new Map();
+
+  valid.forEach(o=>{
+    const name = String(orderCustomerName(o) || "Cliente").trim();
+    const phone = String(orderCustomerPhone(o) || "").trim();
+    const key = `${name}__${phone}`;
+
+    const cur = map.get(key) || { name, phone, orders:0, total:0 };
+    cur.orders += 1;
+    cur.total += Number(orderTotal(o) || 0);
+    map.set(key, cur);
+  });
+
+  const arr = [...map.values()]
+    .sort((a,b)=> b.orders - a.orders || b.total - a.total)
+    .slice(0,10);
+
+  if(!arr.length){
+    box.innerHTML = `<div class="muted">Sem dados.</div>`;
+    return;
+  }
+
+  box.innerHTML = `<div class="spRankList">` + arr.map((c,i)=>`
+    <div class="spRankItem">
+      <div class="spRankPos">${i+1}º</div>
+      <div class="spRankMain">
+        <div class="spRankTitle">${escapeHtml(c.name)}</div>
+        <div class="spRankSub">${escapeHtml(c.phone)} • ${c.orders} pedido(s) • ${money(c.total)}</div>
+      </div>
+    </div>
+  `).join("") + `</div>`;
+}
+
+function renderSalesPerfOrdersTable(list){
+  const box = $("spOrdersTable");
+  const q = String($("spOrderSearch")?.value || "").trim().toLowerCase();
+
+  if(!box) return;
+
+  let rows = list.slice().sort((a,b)=>{
+    const ta = orderCreatedDate(a)?.getTime() || 0;
+    const tb = orderCreatedDate(b)?.getTime() || 0;
+    return tb - ta;
+  });
+
+  if(q){
+    rows = rows.filter(o=>{
+      const id = String(o.id || "").toLowerCase();
+      const name = String(orderCustomerName(o) || "").toLowerCase();
+      const phone = String(orderCustomerPhone(o) || "").toLowerCase();
+      return id.includes(q) || name.includes(q) || phone.includes(q);
+    });
+  }
+
+  if(!rows.length){
+    box.innerHTML = `<div class="muted">Nenhum pedido encontrado.</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="spTableWrap">
+      <table class="spTable">
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Pagamento</th>
+            <th class="num">Subtotal</th>
+            <th class="num">Entrega</th>
+            <th class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(o=>`
+            <tr data-sp-open-order="${escapeAttr(String(o.id))}" style="cursor:pointer;">
+              <td>#${escapeHtml(String(o.id || ""))}</td>
+              <td>
+                <b>${escapeHtml(orderCustomerName(o) || "-")}</b><br>
+                <span class="muted">${escapeHtml(orderCustomerPhone(o) || "")}</span>
+              </td>
+              <td>${escapeHtml(orderType(o) || "-")}</td>
+              <td>${statusPill(o)}</td>
+              <td>${escapeHtml(orderPayment(o) || "-")}</td>
+              <td class="num">${money(orderSubtotal(o) || 0)}</td>
+              <td class="num">${money(orderShipping(o) || 0)}</td>
+              <td class="num"><b>${money(orderTotal(o) || 0)}</b></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  box.querySelectorAll("[data-sp-open-order]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const id = String(el.dataset.spOpenOrder || "");
+      const order = ORDERS.find(o => String(o.id) === id);
+      if(order) openOrderModal(order);
+    });
+  });
+}
+
+function renderSalesPerformance(){
+  const list = getSalesPerfOrders();
+
+  renderSalesPerfCards(list);
+  renderSalesPerfChart(list);
+  renderSalesPerfTopProducts(list);
+  renderSalesPerfTopClients(list);
+  renderSalesPerfOrdersTable(list);
+
+  $("spOverviewWrap").style.display = (SALES_PERF_VIEW === "OVERVIEW") ? "" : "none";
+  $("spOrdersWrap").style.display = (SALES_PERF_VIEW === "ORDERS") ? "" : "none";
+
+  $("spTabOverview").classList.toggle("activeView", SALES_PERF_VIEW === "OVERVIEW");
+  $("spTabOrders").classList.toggle("activeView", SALES_PERF_VIEW === "ORDERS");
+}
+
+
+
+
 
 
     async function loadClientOrders(phone){
@@ -4040,7 +4984,10 @@ async function savePdvPrefs(){
 }
 
    // ====== EVENTS ======
-document.addEventListener("DOMContentLoaded", async ()=>{ 
+    document.addEventListener("DOMContentLoaded", async ()=>{ 
+    setupCropCanvasDrag();
+
+
   try{
     await ensureAdminAuth();
     unlockAdminUI();
@@ -4092,7 +5039,9 @@ $("uiLogoImg")?.addEventListener("change", async ()=>{
     alert("Não foi possível ler a imagem da logo.");
   }
 });
-
+  
+  $("pFlavorsAdd")?.addEventListener("click", ()=> addFlavorRow("pFlavorsList"));
+  $("eFlavorsAdd")?.addEventListener("click", ()=> addFlavorRow("eFlavorsList"));
 
   $("saveStoreUi")?.addEventListener("click", saveStoreUi);
 
@@ -4125,6 +5074,9 @@ bindCropInputById("eImgFile1");
 bindCropInputById("eImgFile2");
 
 
+
+
+
 $("eImgFile1")?.addEventListener("change", ()=>{
   EDIT_REMOVE_IMAGE_1 = false;
   setTimeout(renderEditImagePreviews, 60);
@@ -4154,15 +5106,21 @@ $("eRemoveImg2")?.addEventListener("click", ()=>{
 $("closeCropBtn")?.addEventListener("click", closeCropModal);
 $("applyCropBtn")?.addEventListener("click", applyCropResult);
 $("resetCropBtn")?.addEventListener("click", ()=>{
-  CURRENT_CROP_SCALE = 1;
-  CURRENT_CROP_X = 0;
-  CURRENT_CROP_Y = 0;
-  if($("cropZoom")) $("cropZoom").value = "1";
+  CURRENT_CROP_SCALE = CURRENT_CROP_MIN_SCALE;
+  centerCropImage();
+
+  const zoom = $("cropZoom");
+  if(zoom) zoom.value = String(CURRENT_CROP_SCALE);
+
   drawCropCanvas();
 });
 
 $("cropZoom")?.addEventListener("input", ()=>{
-  CURRENT_CROP_SCALE = Number($("cropZoom").value || 1);
+  const zoom = $("cropZoom");
+  if(!zoom) return;
+
+  CURRENT_CROP_SCALE = Number(zoom.value || CURRENT_CROP_MIN_SCALE);
+  clampCropPosition();
   drawCropCanvas();
 });
 
@@ -4215,6 +5173,46 @@ if(addShipBtn){
 
   refreshOrderAlertAudio();
   syncOrderAlertWithState();
+
+
+
+$("spTabOverview")?.addEventListener("click", ()=>{
+  SALES_PERF_VIEW = "OVERVIEW";
+  renderSalesPerformance();
+});
+
+$("spTabOrders")?.addEventListener("click", ()=>{
+  SALES_PERF_VIEW = "ORDERS";
+  renderSalesPerformance();
+});
+
+$("spRefresh")?.addEventListener("click", async ()=>{
+  await loadOrders();
+  renderSalesPerformance();
+});
+
+$("spPeriod")?.addEventListener("change", renderSalesPerformance);
+$("spFrom")?.addEventListener("change", renderSalesPerformance);
+$("spTo")?.addEventListener("change", renderSalesPerformance);
+$("spOrderSearch")?.addEventListener("input", renderSalesPerformance);
+
+$("spMetricRevenue")?.addEventListener("click", ()=>{
+  SALES_PERF_METRIC = "REVENUE";
+  renderSalesPerformance();
+});
+
+$("spMetricOrders")?.addEventListener("click", ()=>{
+  SALES_PERF_METRIC = "ORDERS";
+  renderSalesPerformance();
+});
+
+$("spMetricTicket")?.addEventListener("click", ()=>{
+  SALES_PERF_METRIC = "TICKET";
+  renderSalesPerformance();
+});
+
+
+
 
 });
 
@@ -4349,6 +5347,12 @@ payload.business_hours = {
          if(t.dataset.tab==="delivery"){
          fillDeliverySettingsForm(SETTINGS || {});
           }
+
+
+        if(t.dataset.tab === "salesperf"){
+        await loadOrders();
+        renderSalesPerformance();
+         }
 
         });
       });
@@ -5001,37 +6005,25 @@ document.addEventListener("click", (e)=>{
 function openPdvStore(){
   const back = document.getElementById("pdvStoreBack");
   const frame = document.getElementById("pdvStoreFrame");
-  if(!back || !frame) return;
 
-  const host = window.location.hostname;
-  const protocol = window.location.protocol;
-
-  // admin local / electron
-  if(
-    protocol === "file:" ||
-    host === "127.0.0.1" ||
-    host === "localhost" ||
-    host === ""
-  ){
-    frame.src = "../store/index.html?pdv=1&t=" + Date.now();
-  }else{
-    // admin online
-    frame.src = "https://emanuelleconfeitariaa-web.github.io/emanuelleconfeitaria-lojaonline/?pdv=1&t=" + Date.now();
-  }
+  // carrega a LOJA em modo PDV
+  frame.src = "../store/index.html?pdv=1&t=" + Date.now();
 
   back.classList.add("open");
-  back.style.display = "flex";
 }
 
 function closePdvStore(){
   const back = document.getElementById("pdvStoreBack");
   const frame = document.getElementById("pdvStoreFrame");
-  if(!back || !frame) return;
-
   back.classList.remove("open");
-  back.style.display = "none";
-  frame.src = "";
+  frame.src = ""; // limpa
+
+  // ✅ opcional: volta foco pro admin
+  setTimeout(()=> {
+    document.getElementById("openCreateOrder")?.focus();
+  }, 50);
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnClose = document.getElementById("pdvStoreClose");
@@ -5215,7 +6207,7 @@ document.getElementById("pdvStoreBack")?.addEventListener("click", (e)=>{
     <div class="mBody">
       <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;" id="cropGrid">
         <div style="background:#111;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:340px;">
-          <canvas id="cropCanvas" width="900" height="600" style="width:100%;max-width:100%;display:block;background:#111;"></canvas>
+          <canvas id="cropCanvas" width="900" height="600" style="width:100%;max-width:100%;display:block;background:#111;pointer-events:auto;"></canvas>
         </div>
 
         <div>
