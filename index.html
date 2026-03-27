@@ -106,10 +106,11 @@ body{
   position:absolute;
   inset:0;
   background-image: var(--bannerImg, none);
-  background-size: cover;
-  background-position: center;
+  background-size: 100% 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
   opacity: 1;
-  transform: scale(1.03);
+  transform: none;
 }
 
 /* escurecimento */
@@ -240,17 +241,6 @@ body{
 }
 
 
-/* Imagem do banner (quando existir) */
-.banner::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background-image: var(--bannerImg, none);
-  background-size: cover;
-  background-position: center;
-  opacity: 1;
-  transform: scale(1.02);
-}
 
 /* Escurecer para o texto ficar legível */
 .banner::after{
