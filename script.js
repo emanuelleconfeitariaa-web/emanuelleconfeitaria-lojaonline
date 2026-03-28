@@ -752,14 +752,28 @@ document.documentElement.style.setProperty(
 const useImg = (ui.banner_use_image !== false);
 const img = ui.banner_image_dataurl || null;
 const dim = (ui.banner_dim !== undefined) ? Number(ui.banner_dim) : 0.50;
+const bannerEl = document.querySelector(".banner");
 
 document.documentElement.style.setProperty("--bannerDim", String(dim));
+document.documentElement.style.setProperty("--bannerRatio", "24 / 7");
 
-if(useImg && img){
-  document.documentElement.style.setProperty("--bannerImg", `url(${img})`);
-} else {
-  document.documentElement.style.removeProperty("--bannerImg");
+if(bannerEl){
+  if(useImg && img){
+    bannerEl.style.backgroundImage = `url("${img}")`;
+    bannerEl.style.backgroundColor = "transparent";
+    bannerEl.classList.add("has-image");
+  }else{
+    bannerEl.style.backgroundImage = "";
+    bannerEl.style.backgroundColor = "";
+    bannerEl.classList.remove("has-image");
+  }
 }
+
+
+console.log("banner_use_image =", ui.banner_use_image);
+console.log("banner_image_dataurl existe =", !!ui.banner_image_dataurl);
+console.log("banner_image_dataurl começo =", (ui.banner_image_dataurl || "").slice(0, 80));
+console.log("css --bannerImg =", getComputedStyle(document.documentElement).getPropertyValue("--bannerImg"));
 
       $("shopName").textContent = SETTINGS.shop_name || "Emanuelle Confeitaria";
       $("shopTag").textContent  = SETTINGS.shop_tagline || "Retirada ou Entrega • Pedido vai pro WhatsApp";
