@@ -29,6 +29,8 @@ let FEATURED_CATS = new Set();
 let SHIPPING_QUOTE_TIMER = null;
 let CUSTOMER_GEO = null; // { lat, lon }
 let CUSTOMER_LOCATION = null;
+let IS_SENDING_ORDER = false;
+let LAST_ORDER_SENT_AT = 0;
 
 function setVal(id, v){
   const el = document.getElementById(id);
@@ -859,6 +861,8 @@ async function loadProducts(){
   const map = new Map();
 
   (arr || []).forEach((p, i) => {
+    if(p?.paused === true) return; // produto pausado some da loja
+
     const key = String(p.id ?? p._id ?? "").trim();
 
     if(key){
@@ -1660,117 +1664,231 @@ if(service.toLowerCase() === "delivery" || String(order.type||"").toUpperCase()=
 }
 
 
-    async function sendOrder(){
-      if(!CART.length) return alert("Carrinho vazio.");
 
-      const name = $("cName").value.trim();
-      const phone = phoneOnly($("cPhone").value.trim());
-      const type = $("type").value;
-      const address = type==="ENTREGA" ? $("addr").value.trim() : "";
-      const payment = $("pay").value;
-      const notes = $("notes").value.trim();
-      const need_nfce = $("needNfce").checked;
-      const cpf = $("cpf").value.trim();
+function openOrderSuccessBox(order){
+  const old = document.getElementById("orderSuccessOverlay");
+  if(old) old.remove();
 
-      const openNow = isOpenNow();
-      const bh = SETTINGS?.business_hours;
-      const allowSchedule = !!(bh && bh.allow_schedule !== false);
+  const name = String(order?.customer_name || "").trim() || "cliente";
+  const type = String(order?.type || "RETIRADA");
+  const orderId = order?.id || order?._id || order?.number || "—";
 
-      // Se a loja estiver fechada e controle de horário estiver ativo:
-      // - se permitir agendamento, exige data/hora
-      // - se não permitir, bloqueia finalizar pedido
-      let scheduled_for = null;
-      const schedVisible = $("scheduleBox") && $("scheduleBox").style.display !== "none";
-      if(bh?.enabled && !openNow.ok){
-        if(!allowSchedule){
-          return alert("A loja está fechada no momento. Volte no horário de atendimento.");
-        }
-        if(schedVisible){
-          const d = $("schDate").value;
-          const t = $("schTime").value;
-          if(!d || !t) return alert("Escolha data e hora para agendar o pedido.");
-          scheduled_for = `${d} ${t}`;
-        }
-      }
+  const typeLabel = type === "ENTREGA"
+    ? "Entrega"
+    : "Retirada no balcão";
 
-if(type==="ENTREGA" && !address){
-  return alert("Informe o endereço.");
+  const box = document.createElement("div");
+  box.id = "orderSuccessOverlay";
+  box.innerHTML = `
+    <div style="
+      position:fixed; inset:0; z-index:99999;
+      background:rgba(0,0,0,.45);
+      display:flex; align-items:center; justify-content:center;
+      padding:18px;
+    ">
+      <div style="
+        width:min(92vw, 560px);
+        background:#fff;
+        border-radius:24px;
+        padding:26px 22px;
+        box-shadow:0 20px 60px rgba(0,0,0,.20);
+        text-align:center;
+        font-family:inherit;
+      ">
+        <div style="font-size:22px;font-weight:900;color:#1f1f1f;margin-bottom:6px;">
+          Olá, ${escapeHtml(name)} 👋
+        </div>
+
+        <div style="font-size:15px;color:#444;margin-bottom:22px;">
+          Pedido #${escapeHtml(String(orderId))} • ${escapeHtml(typeLabel)}
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:center;gap:0; margin: 10px 0 18px;">
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
+            <div style="
+              width:64px;height:64px;border-radius:999px;
+              background:#16c05a;color:#fff;
+              display:flex;align-items:center;justify-content:center;
+              font-size:28px;font-weight:900;
+              box-shadow:0 8px 20px rgba(22,192,90,.25);
+            ">✓</div>
+            <div style="margin-top:10px;font-weight:800;color:#16a34a;">Recebido</div>
+          </div>
+
+          <div style="height:4px; width:72px; background:#16c05a; border-radius:999px;"></div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
+            <div style="
+              width:64px;height:64px;border-radius:999px;
+              background:#16c05a;color:#fff;
+              display:flex;align-items:center;justify-content:center;
+              font-size:28px;font-weight:900;
+              box-shadow:0 8px 20px rgba(22,192,90,.25);
+            ">👩‍🍳</div>
+            <div style="margin-top:10px;font-weight:800;color:#16a34a;">Em preparo</div>
+          </div>
+
+          <div style="height:4px; width:72px; background:#e7e7e7; border-radius:999px;"></div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
+            <div style="
+              width:64px;height:64px;border-radius:999px;
+              background:#f3f3f3;color:#777;
+              display:flex;align-items:center;justify-content:center;
+              font-size:28px;font-weight:900;
+            ">📦</div>
+            <div style="margin-top:10px;font-weight:800;color:#666;">
+              ${type === "ENTREGA" ? "Saiu p/ entrega" : "Pronto p/ retirada"}
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:14px;color:#555;line-height:1.5;margin-bottom:18px;">
+          Seu pedido foi enviado com sucesso.<br>
+          Você também será avisado no WhatsApp sobre as próximas atualizações.
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button id="orderSuccessCloseBtn" style="
+            border:none;
+            background:#8b5a4a;
+            color:#fff;
+            font-weight:800;
+            border-radius:999px;
+            padding:12px 22px;
+            cursor:pointer;
+          ">Fechar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(box);
+
+  const close = () => box.remove();
+  document.getElementById("orderSuccessCloseBtn")?.addEventListener("click", close);
+  box.addEventListener("click", (e)=>{
+    if(e.target === box.firstElementChild) close();
+  });
 }
-      if(!name) return alert("Informe seu nome.");
-      if(!phone) return alert("Informe seu WhatsApp.");
-      if(type==="ENTREGA" && !address) return alert("Informe o endereço.");
-      if(need_nfce && !cpf) return alert("Informe o CPF para NFC-e.");
 
-const items = CART.map(it=>({
-  product_id: it.product_id,
-  name: it.name,
-  price: Number(it.price||0),
-  qty: Number(it.qty||0),
-  flavor: String(it.flavor || ""),
-  addons: Array.isArray(it.addons) ? it.addons : []
-}));
+function setOrderButtonLoading(isLoading){
+  const btn =
+    document.getElementById("sendOrderBtn") ||
+    document.querySelector("[data-send-order]") ||
+    document.querySelector(".sendOrderBtn");
 
-      const t = cartTotals();
+  if(!btn) return;
 
-const payload = {
-  type, // "ENTREGA" ou "RETIRADA"
-  customer_name: name,
-  customer_phone: phone,
-  address: (type === "ENTREGA") ? address : "", // garante vazio se retirada
-  payment,
-  location: CUSTOMER_LOCATION ? {
-  lat: Number(CUSTOMER_LOCATION.lat),
-  lng: Number(CUSTOMER_LOCATION.lng)
-} : null,
-  notes,
-  need_nfce,
-  cpf,
-  scheduled_for,
-  shipping: Number(t.shipping || 0),
-  subtotal: Number(t.subtotal || 0),
-  shipping: Number(DYNAMIC_SHIPPING ?? 0),
-  total: Number(t.total || 0),
-  customer_location: CUSTOMER_GEO ? {
-  lat: Number(CUSTOMER_GEO.lat),
-  lon: Number(CUSTOMER_GEO.lon)
-} : null,
-  items
-};
+  if(isLoading){
+    btn.disabled = true;
+    btn.dataset.oldText = btn.textContent || "Enviar pedido";
+    btn.textContent = "Enviando...";
+    btn.style.opacity = ".7";
+    btn.style.pointerEvents = "none";
+  }else{
+    btn.disabled = false;
+    btn.textContent = btn.dataset.oldText || "Enviar pedido";
+    btn.style.opacity = "";
+    btn.style.pointerEvents = "";
+  }
+}
 
-const res = await fetch(API + "/api/orders", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload)
-});
 
-      const data = await res.json().catch(()=>null);
-      if(!res.ok){
-        alert((data && data.error) ? data.error : "Erro ao salvar pedido.");
-        return;
-      }
 
-      
-const preview = buildPreviewLink(data.order);
-const bodyMsg = whatsappMessage(data.order);
+async function sendOrder(){
+  if(IS_SENDING_ORDER){
+    return;
+  }
 
-// importante: o link precisa ficar sozinho no topo
-const msg = preview
-  ? `${preview}\n\n${bodyMsg}`
-  : bodyMsg;
+  const now = Date.now();
+  if(now - LAST_ORDER_SENT_AT < 8000){
+    alert("Aguarde alguns segundos antes de enviar outro pedido.");
+    return;
+  }
 
-      const to = phoneOnly(SETTINGS.whatsapp_number || "");
-      const url = to
-        ? `https://wa.me/${to}?text=${encodeURIComponent(msg)}`
-        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  IS_SENDING_ORDER = true;
+  setOrderButtonLoading(true);
 
-      window.open(url, "_blank");
+  try{
+    const name = $("name").value.trim();
+    const phone = $("phone").value.trim();
+    const type = $("type").value;
+    const address = $("address").value.trim();
+    const notes = $("notes").value.trim();
 
-      CART = [];
-      renderCart();
-      closeModal();
-      closeDrawer();
-      toast("Pedido enviado ✅");
+    if(!name) return alert("Informe seu nome.");
+    if(!phone) return alert("Informe seu telefone.");
+    if(!CART.length) return alert("Seu carrinho está vazio.");
+
+    if(type === "ENTREGA" && !address){
+      return alert("Informe o endereço para entrega.");
     }
+
+    const subtotal = CART.reduce((acc,it)=> acc + (Number(it.price||0) * Number(it.qty||0)), 0);
+    const shipping = (type === "ENTREGA") ? Number(DYNAMIC_SHIPPING?.price || 0) : 0;
+    const total = subtotal + shipping;
+
+    const payload = {
+      customer_name: name,
+      customer_phone: phone,
+      type,
+      address,
+      notes,
+      items: CART.map(it => ({
+        product_id: it.product_id,
+        name: it.name,
+        price: Number(it.price || 0),
+        qty: Number(it.qty || 0),
+        addons: Array.isArray(it.addons) ? it.addons : [],
+        flavor: String(it.flavor || "")
+      })),
+      subtotal,
+      shipping,
+      total
+    };
+
+    const res = await fetch(API + "/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(()=>null);
+
+    if(!res.ok){
+      alert((data && data.error) ? data.error : "Erro ao salvar pedido.");
+      return;
+    }
+
+    const preview = buildPreviewLink(data.order);
+    const bodyMsg = whatsappMessage(data.order);
+
+    const msg = preview
+      ? `${preview}\n\n${bodyMsg}`
+      : bodyMsg;
+
+    const to = phoneOnly(SETTINGS.whatsapp_number || "");
+    const url = to
+      ? `https://wa.me/${to}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+    window.open(url, "_blank");
+
+    LAST_ORDER_SENT_AT = Date.now();
+
+    CART = [];
+    renderCart();
+    closeModal();
+    closeDrawer();
+    openOrderSuccessBox(data.order);
+    toast("Pedido enviado ✅");
+
+  } finally {
+    IS_SENDING_ORDER = false;
+    setOrderButtonLoading(false);
+  }
+}
 
 
 
