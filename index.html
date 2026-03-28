@@ -40,6 +40,7 @@
       /* banner */
       --bannerBg: var(--primary);
       --bannerHeight: 104px;
+      --bannerRatio: 24 / 7;
 
       /* card */
       --radius: 16px;
@@ -88,7 +89,7 @@ body{
 
 
     /* ===== Banner Olá Click ===== */
- .banner{
+.banner{
   height: var(--bannerHeight);
   background: var(--bannerBg);
   color: var(--bannerText);
@@ -98,22 +99,23 @@ body{
   padding: 14px 16px;
   position: relative;
   overflow: hidden;
-}
-
-/* imagem */
-.banner::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background-image: var(--bannerImg, none);
-  background-size: 100% 100%;
   background-position: center center;
   background-repeat: no-repeat;
-  opacity: 1;
-  transform: none;
+  background-size: cover;
 }
 
-/* escurecimento */
+.banner.has-image{
+  height: auto;
+  aspect-ratio: var(--bannerRatio);
+  min-height: 0;
+}
+
+.banner > *{
+  position: relative;
+  z-index: 1;
+}
+
+
 .banner::after{
   content:"";
   position:absolute;
@@ -121,11 +123,6 @@ body{
   background: rgba(0,0,0, var(--bannerDim, 0.50));
 }
 
-/* conteúdo acima */
-.banner > *{
-  position: relative;
-  z-index: 2;
-}
 
 .brand{
   display:flex;
