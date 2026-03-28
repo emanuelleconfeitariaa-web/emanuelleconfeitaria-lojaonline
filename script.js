@@ -1796,99 +1796,137 @@ function setOrderButtonLoading(isLoading){
 
 
 
+
 async function sendOrder(){
-  if(IS_SENDING_ORDER){
-    return;
-  }
 
-  const now = Date.now();
-  if(now - LAST_ORDER_SENT_AT < 8000){
-    alert("Aguarde alguns segundos antes de enviar outro pedido.");
-    return;
-  }
 
-  IS_SENDING_ORDER = true;
-  setOrderButtonLoading(true);
-
-  try{
-    const name = $("name").value.trim();
-    const phone = $("phone").value.trim();
-    const type = $("type").value;
-    const address = $("address").value.trim();
-    const notes = $("notes").value.trim();
-
-    if(!name) return alert("Informe seu nome.");
-    if(!phone) return alert("Informe seu telefone.");
-    if(!CART.length) return alert("Seu carrinho está vazio.");
-
-    if(type === "ENTREGA" && !address){
-      return alert("Informe o endereço para entrega.");
-    }
-
-    const subtotal = CART.reduce((acc,it)=> acc + (Number(it.price||0) * Number(it.qty||0)), 0);
-    const shipping = (type === "ENTREGA") ? Number(DYNAMIC_SHIPPING?.price || 0) : 0;
-    const total = subtotal + shipping;
-
-    const payload = {
-      customer_name: name,
-      customer_phone: phone,
-      type,
-      address,
-      notes,
-      items: CART.map(it => ({
-        product_id: it.product_id,
-        name: it.name,
-        price: Number(it.price || 0),
-        qty: Number(it.qty || 0),
-        addons: Array.isArray(it.addons) ? it.addons : [],
-        flavor: String(it.flavor || "")
-      })),
-      subtotal,
-      shipping,
-      total
-    };
-
-    const res = await fetch(API + "/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json().catch(()=>null);
-
-    if(!res.ok){
-      alert((data && data.error) ? data.error : "Erro ao salvar pedido.");
-      return;
-    }
-
-    const preview = buildPreviewLink(data.order);
-    const bodyMsg = whatsappMessage(data.order);
-
-    const msg = preview
-      ? `${preview}\n\n${bodyMsg}`
-      : bodyMsg;
-
-    const to = phoneOnly(SETTINGS.whatsapp_number || "");
-    const url = to
-      ? `https://wa.me/${to}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-
-    window.open(url, "_blank");
-
-    LAST_ORDER_SENT_AT = Date.now();
-
-    CART = [];
-    renderCart();
-    closeModal();
-    closeDrawer();
-    openOrderSuccessBox(data.order);
-    toast("Pedido enviado ✅");
-
-  } finally {
-    IS_SENDING_ORDER = false;
-    setOrderButtonLoading(false);
-  }
+if(IS_SENDING_ORDER){
+  return;
 }
+
+const now = Date.now();
+if(now - LAST_ORDER_SENT_AT < 8000){
+  return alert("Aguarde alguns segundos antes de enviar outro pedido.");
+}
+
+IS_SENDING_ORDER = true;
+setOrderButtonLoading(true);
+
+
+
+      if(!CART.length) return alert("Carrinho vazio.");
+
+      const name = $("cName").value.trim();
+      const phone = phoneOnly($("cPhone").value.trim());
+      const type = $("type").value;
+      const address = type==="ENTREGA" ? $("addr").value.trim() : "";
+      const payment = $("pay").value;
+      const notes = $("notes").value.trim();
+      const need_nfce = $("needNfce").checked;
+      const cpf = $("cpf").value.trim();
+
+      const openNow = isOpenNow();
+      const bh = SETTINGS?.business_hours;
+      const allowSchedule = !!(bh && bh.allow_schedule !== false);
+
+      // Se a loja estiver fechada e controle de horário estiver ativo:
+      // - se permitir agendamento, exige data/hora
+      // - se não permitir, bloqueia finalizar pedido
+      let scheduled_for = null;
+      const schedVisible = $("scheduleBox") && $("scheduleBox").style.display !== "none";
+      if(bh?.enabled && !openNow.ok){
+        if(!allowSchedule){
+          return alert("A loja está fechada no momento. Volte no horário de atendimento.");
+        }
+        if(schedVisible){
+          const d = $("schDate").value;
+          const t = $("schTime").value;
+          if(!d || !t) return alert("Escolha data e hora para agendar o pedido.");
+          scheduled_for = `${d} ${t}`;
+        }
+      }
+
+if(type==="ENTREGA" && !address){
+  return alert("Informe o endereço.");
+}
+      if(!name) return alert("Informe seu nome.");
+      if(!phone) return alert("Informe seu WhatsApp.");
+      if(type==="ENTREGA" && !address) return alert("Informe o endereço.");
+      if(need_nfce && !cpf) return alert("Informe o CPF para NFC-e.");
+
+const items = CART.map(it=>({
+  product_id: it.product_id,
+  name: it.name,
+  price: Number(it.price||0),
+  qty: Number(it.qty||0),
+  flavor: String(it.flavor || ""),
+  addons: Array.isArray(it.addons) ? it.addons : []
+}));
+
+      const t = cartTotals();
+
+const payload = {
+  type, // "ENTREGA" ou "RETIRADA"
+  customer_name: name,
+  customer_phone: phone,
+  address: (type === "ENTREGA") ? address : "", // garante vazio se retirada
+  payment,
+  location: CUSTOMER_LOCATION ? {
+  lat: Number(CUSTOMER_LOCATION.lat),
+  lng: Number(CUSTOMER_LOCATION.lng)
+} : null,
+  notes,
+  need_nfce,
+  cpf,
+  scheduled_for,
+  shipping: Number(t.shipping || 0),
+  subtotal: Number(t.subtotal || 0),
+  shipping: Number(DYNAMIC_SHIPPING ?? 0),
+  total: Number(t.total || 0),
+  customer_location: CUSTOMER_GEO ? {
+  lat: Number(CUSTOMER_GEO.lat),
+  lon: Number(CUSTOMER_GEO.lon)
+} : null,
+  items
+};
+
+const res = await fetch(API + "/api/orders", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload)
+});
+
+      const data = await res.json().catch(()=>null);
+      if(!res.ok){
+        alert((data && data.error) ? data.error : "Erro ao salvar pedido.");
+        return;
+      }
+
+      
+const preview = buildPreviewLink(data.order);
+const bodyMsg = whatsappMessage(data.order);
+
+// importante: o link precisa ficar sozinho no topo
+const msg = preview
+  ? `${preview}\n\n${bodyMsg}`
+  : bodyMsg;
+
+      const to = phoneOnly(SETTINGS.whatsapp_number || "");
+      const url = to
+        ? `https://wa.me/${to}?text=${encodeURIComponent(msg)}`
+        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+window.open(url, "_blank");
+
+LAST_ORDER_SENT_AT = Date.now();
+
+CART = [];
+renderCart();
+closeModal();
+closeDrawer();
+openOrderSuccessBox(data.order);
+toast("Pedido enviado ✅");
+    }
 
 
 
