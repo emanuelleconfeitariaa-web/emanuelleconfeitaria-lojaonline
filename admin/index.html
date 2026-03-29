@@ -4332,18 +4332,42 @@ function formatClientAddress(address){
   }
 
   if(typeof address === "object"){
-    const parts = [
-      address.street,
-      address.number,
-      address.neighborhood,
-      address.city,
-      address.complement,
-      address.zip
-    ]
-    .map(v => String(v || "").trim())
-    .filter(Boolean);
+    // caso venha em outro formato
+    const street =
+      address.street ||
+      address.rua ||
+      address.address ||
+      "";
 
-    return parts.join(", ");
+    const number =
+      address.number ||
+      address.numero ||
+      "";
+
+    const neighborhood =
+      address.neighborhood ||
+      address.bairro ||
+      "";
+
+    const city =
+      address.city ||
+      address.cidade ||
+      "";
+
+    const complement =
+      address.complement ||
+      address.complemento ||
+      "";
+
+    const zip =
+      address.zip ||
+      address.cep ||
+      "";
+
+    return [street, number, neighborhood, city, complement, zip]
+      .map(v => String(v || "").trim())
+      .filter(Boolean)
+      .join(", ");
   }
 
   return "";
@@ -5269,6 +5293,7 @@ $("uiBannerImg")?.addEventListener("change", async ()=>{
   }
 });
   
+$("coShipping")?.addEventListener("input", renderCOItems);
 // logo da loja (upload)
 $("uiLogoImg")?.addEventListener("change", async ()=>{
   const f = $("uiLogoImg").files && $("uiLogoImg").files[0];
@@ -6007,67 +6032,98 @@ const res = await apiFetch(
 }
 
 function renderCOItems(){
-  const box = $("coItemsList");
-  if(!box) return;
+  const list = $("coItemsList");
+  const totalLine = $("coTotalLine");
+  if(!list || !totalLine) return;
 
-  if(!CO_ITEMS.length){
-    box.innerHTML = `<div class="muted">Nenhum item.</div>`;
-  } else {
-    box.innerHTML = CO_ITEMS.map((it,idx)=>{
-      const addons = Array.isArray(it.addons) ? it.addons : [];
-      const addonsHtml = addons.length
-        ? `
-          <div class="itemAddons">
-            ${addons.map(a=>{
-              // aceita {name, price} ou string
-              if(typeof a === "string"){
-                return `<span class="addonChip">${escapeHtml(a)}</span>`;
-              }
-              const nm = a?.name ?? a?.title ?? a?.label ?? "";
-              const pr = Number(a?.price || 0);
-              return `<span class="addonChip">${escapeHtml(nm)}${pr ? ` (+${money(pr)})` : ""}</span>`;
-            }).join("")}
-          </div>
-        `
-        : `<div class="itemAddons muted">Sem adicionais</div>`;
-
-      return `
-        <div class="item">
-          <div class="itemLeft">
-            <div class="itemTitle">${escapeHtml(it.name)}</div>
-            <div class="itemSub">Qtd: ${it.qty} • R$ ${money(it.price)} cada</div>
-            ${addonsHtml}
-          </div>
-          <div class="itemRight">
-            <button class="smallBtn danger" data-co-del="${idx}">Remover</button>
-          </div>
-        </div>
-      `;
-    }).join("");
+  if(!Array.isArray(CO_ITEMS) || !CO_ITEMS.length){
+    list.innerHTML = `<div class="muted">Nenhum item adicionado.</div>`;
+    const shipping = Number($("coShipping")?.value || 0);
+    totalLine.textContent = `Total: ${money(shipping)}`;
+    return;
   }
 
-  box.querySelectorAll("[data-co-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const idx = Number(btn.dataset.coDel);
-      CO_ITEMS.splice(idx,1);
-      renderCOItems();
-    });
-  });
+  list.innerHTML = CO_ITEMS.map((it, idx) => {
+    const qty = Math.max(1, Number(it.qty || 1));
+    const unit = Number(it.price || 0);
+    const lineTotal = unit * qty;
 
-  // ✅ total incluindo adicionais
-  const subtotal = CO_ITEMS.reduce((a,it)=>{
-    const base = Number(it.price||0) * Number(it.qty||1);
+    const flavor = String(it.flavor || "").trim();
     const addons = Array.isArray(it.addons) ? it.addons : [];
-    const addSum = addons.reduce((s,x)=>{
-      if(typeof x === "string") return s; // sem preço
-      return s + Number(x?.price || 0);
-    }, 0) * Number(it.qty||1); // adicionais por unidade
-    return a + base + addSum;
+
+    const flavorHtml = flavor
+      ? `<div class="muted" style="font-size:12px;">Sabor: ${escapeHtml(flavor)}</div>`
+      : "";
+
+    const addonsHtml = addons.length
+      ? `<div class="muted" style="font-size:12px;">Adicionais: ${addons.map(a => escapeHtml(a?.name || "")).filter(Boolean).join(", ")}</div>`
+      : "";
+
+    return `
+      <div class="listItem" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-weight:900;word-break:break-word;">
+            ${escapeHtml(it.name || "Item")}
+          </div>
+
+          ${flavorHtml}
+          ${addonsHtml}
+
+          <div class="muted" style="font-size:12px;margin-top:4px;">
+            Unitário: ${money(unit)}
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="smallBtn" onclick="decreaseCOItemQty(${idx})">−</button>
+            <div style="min-width:30px;text-align:center;font-weight:900;">${qty}</div>
+            <button class="smallBtn" onclick="increaseCOItemQty(${idx})">+</button>
+          </div>
+
+          <div style="font-weight:900;">${money(lineTotal)}</div>
+
+          <button class="smallBtn" onclick="removeCOItem(${idx})">Remover</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const subtotal = CO_ITEMS.reduce((acc, it) => {
+    return acc + (Number(it.price || 0) * Math.max(1, Number(it.qty || 1)));
   }, 0);
 
-  const ship = Number($("coShipping")?.value || 0);
-  const total = subtotal + ship;
-  $("coTotalLine").innerText = "Total: " + money(total);
+  const shipping = Number($("coShipping")?.value || 0);
+  const total = subtotal + shipping;
+
+  totalLine.textContent = `Total: ${money(total)}`;
+}
+
+
+function increaseCOItemQty(index){
+  if(!Array.isArray(CO_ITEMS) || !CO_ITEMS[index]) return;
+  CO_ITEMS[index].qty = Math.max(1, Number(CO_ITEMS[index].qty || 1) + 1);
+  renderCOItems();
+}
+
+function decreaseCOItemQty(index){
+  if(!Array.isArray(CO_ITEMS) || !CO_ITEMS[index]) return;
+
+  const current = Math.max(1, Number(CO_ITEMS[index].qty || 1));
+
+  if(current <= 1){
+    removeCOItem(index);
+    return;
+  }
+
+  CO_ITEMS[index].qty = current - 1;
+  renderCOItems();
+}
+
+function removeCOItem(index){
+  if(!Array.isArray(CO_ITEMS)) return;
+  CO_ITEMS.splice(index, 1);
+  renderCOItems();
 }
 
       // ===== Fix definitivo: fechar modal de cliente (delegação) =====
@@ -6118,13 +6174,29 @@ document.addEventListener("click", (e)=>{
   });
 })();
 
-    function parseClientFromSearch(val){
-      if(!val) return null;
-      const phone = (val.split("—")[1]||"").trim();
-      if(!phone) return null;
-      return CLIENTS.find(c=>String(c.phone||"").trim()===phone) || null;
-    }
+function parseClientFromSearch(val){
+  if(!val) return null;
 
+  const phone = (String(val).split("—")[1] || "").trim();
+  if(!phone) return null;
+
+  const matches = CLIENTS.filter(c => String(c.phone || "").trim() === phone);
+  if(!matches.length) return null;
+
+  const best = matches.find(c => {
+    const a = c.address || {};
+    return !!(
+      String(a.street || "").trim() ||
+      String(a.number || "").trim() ||
+      String(a.neighborhood || "").trim() ||
+      String(a.city || "").trim() ||
+      String(a.complement || "").trim() ||
+      String(a.zip || "").trim()
+    );
+  });
+
+  return best || matches[0];
+}
 $("openCreateOrder").addEventListener("click", async ()=>{
   const base =
     String(SETTINGS?.store_url || "").trim() ||
@@ -6152,13 +6224,18 @@ $("openCreateOrder").addEventListener("click", async ()=>{
 
     $("closeCreateOrder").addEventListener("click", ()=>showModal("createOrderModal", false));
 
-    $("coSearchClient").addEventListener("change", ()=>{
-      const c = parseClientFromSearch($("coSearchClient").value);
-      if(!c) return;
-      $("coName").value = c.name||"";
-      $("coPhone").value = c.phone||"";
-      $("coAddress").value = c.address||"";
-    });
+
+    
+$("coSearchClient").addEventListener("change", ()=>{
+  const c = parseClientFromSearch($("coSearchClient").value);
+  if(!c) return;
+
+  $("coName").value = c.name || "";
+  $("coPhone").value = c.phone || "";
+  $("coAddress").value = formatClientAddress(
+    c.address || c.customer_address || c.endereco || ""
+  );
+});
 
     $("coAddItem").addEventListener("click", ()=>{
       const pid = $("coProduct").value;
@@ -6210,15 +6287,17 @@ $("openCreateOrder").addEventListener("click", async ()=>{
     customer_phone: phone,
     address: (type === "ENTREGA" ? address : ""),
     notes,
-    paid: (payment_status === "PAID"),
+    paid: (payment_status === "PAGO"),
 
     // itens
-    items: CO_ITEMS.map(it => ({
-      product_id: it.product_id || it.pid || it.id,
-      name: it.name,
-      price: Number(it.price || 0),
-      qty: Number(it.qty || 1)
-    })),
+items: CO_ITEMS.map(it => ({
+  product_id: it.product_id || it.pid || it.id,
+  name: it.name,
+  price: Number(it.price || 0),
+  qty: Number(it.qty || 1),
+  addons: Array.isArray(it.addons) ? it.addons : [],
+  flavor: String(it.flavor || "")
+})),
 
     subtotal,
     total,
@@ -6262,8 +6341,12 @@ function openPdvStore(){
   const back = document.getElementById("pdvStoreBack");
   const frame = document.getElementById("pdvStoreFrame");
 
-  // carrega a LOJA em modo PDV
-  frame.src = "../store/index.html?pdv=1&t=" + Date.now();
+  const base =
+    String(SETTINGS?.store_url || "").trim() ||
+    "https://emanuelleconfeitariaa-web.github.io/"; //CRIAR PEDIDO MANUAL//
+
+  const sep = base.includes("?") ? "&" : "?";
+  frame.src = `${base}${sep}pdv=1&t=${Date.now()}`;
 
   back.classList.add("open");
 }
@@ -6279,6 +6362,38 @@ function closePdvStore(){
     document.getElementById("openCreateOrder")?.focus();
   }, 50);
 }
+
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== "PDV_CART") return;
+
+  const cart = Array.isArray(data.cart) ? data.cart : [];
+
+  CO_ITEMS = cart.map(it => ({
+    product_id: it.product_id || it.pid || it.id || "",
+    name: String(it.name || ""),
+    price: Number(it.price || 0),
+    qty: Math.max(1, Number(it.qty || 1)),
+    addons: Array.isArray(it.addons) ? it.addons : [],
+    flavor: String(it.flavor || "")
+  }));
+
+  renderCOItems();
+
+  closePdvStore();
+
+  const total = Number(data.total || 0);
+  const shipping = Number($("coShipping")?.value || 0);
+  const totalLine = $("coTotalLine");
+  if (totalLine) {
+    totalLine.textContent = `Total: ${money(total + shipping)}`;
+  }
+
+  toast?.("Itens trazidos da loja ✅");
+});
+
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
