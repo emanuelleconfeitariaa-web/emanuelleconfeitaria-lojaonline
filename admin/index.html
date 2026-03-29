@@ -6125,9 +6125,16 @@ document.addEventListener("click", (e)=>{
       return CLIENTS.find(c=>String(c.phone||"").trim()===phone) || null;
     }
 
-      $("openCreateOrder").addEventListener("click", async ()=>{
-         openPdvStore();
-   });
+$("openCreateOrder").addEventListener("click", async ()=>{
+  const base =
+    String(SETTINGS?.store_url || "").trim() ||
+    "https://emanuelleconfeitariaa-web.github.io/";
+
+  const sep = base.includes("?") ? "&" : "?";
+  const url = `${base}${sep}pdv=1`;
+
+  window.open(url, "_blank", "noopener");
+});
 
       $("coSearchClient").value = "";
       $("coName").value = "";
