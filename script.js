@@ -1796,6 +1796,54 @@ function setOrderButtonLoading(isLoading){
 
 
 
+function openOrderSendingBox(){
+  const old = document.getElementById("orderSendingOverlay");
+  if(old) old.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "orderSendingOverlay";
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:99998;
+    background:rgba(0,0,0,.35);
+    display:flex; align-items:center; justify-content:center;
+    padding:18px;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      width:min(92vw,420px);
+      background:#fff;
+      border-radius:24px;
+      padding:22px 18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.20);
+      text-align:center;
+      font-family:inherit;
+    ">
+      <div style="
+        width:58px;height:58px;border-radius:999px;
+        margin:0 auto 14px;
+        display:flex;align-items:center;justify-content:center;
+        background:#8b5a4a;color:#fff;font-size:26px;font-weight:900;
+      ">⌛</div>
+
+      <div style="font-size:22px;font-weight:900;color:#1f1f1f;margin-bottom:6px;">
+        Enviando seu pedido...
+      </div>
+
+      <div style="font-size:14px;color:#666;line-height:1.5;">
+        Aguarde só um instante enquanto confirmamos seu pedido.
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function closeOrderSendingBox(){
+  document.getElementById("orderSendingOverlay")?.remove();
+}
+
+
 
 async function sendOrder(){
 
@@ -1811,7 +1859,9 @@ if(now - LAST_ORDER_SENT_AT < 8000){
 
 IS_SENDING_ORDER = true;
 setOrderButtonLoading(true);
+openOrderSendingBox();
 
+try{
 
 
       if(!CART.length) return alert("Carrinho vazio.");
@@ -1879,10 +1929,9 @@ const payload = {
   need_nfce,
   cpf,
   scheduled_for,
-  shipping: Number(t.shipping || 0),
-  subtotal: Number(t.subtotal || 0),
-  shipping: Number(DYNAMIC_SHIPPING ?? 0),
-  total: Number(t.total || 0),
+subtotal: Number(t.subtotal || 0),
+shipping: Number(t.shipping || 0),
+total: Number(t.total || 0),
   customer_location: CUSTOMER_GEO ? {
   lat: Number(CUSTOMER_GEO.lat),
   lon: Number(CUSTOMER_GEO.lon)
@@ -1911,12 +1960,12 @@ const msg = preview
   ? `${preview}\n\n${bodyMsg}`
   : bodyMsg;
 
-      const to = phoneOnly(SETTINGS.whatsapp_number || "");
-      const url = to
-        ? `https://wa.me/${to}?text=${encodeURIComponent(msg)}`
-        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+const to = phoneOnly(SETTINGS.whatsapp_number || "");
+const url = to
+  ? `https://wa.me/${to}?text=${encodeURIComponent(msg)}`
+  : `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-window.open(url, "_blank");
+closeOrderSendingBox();
 
 LAST_ORDER_SENT_AT = Date.now();
 
@@ -1924,9 +1973,24 @@ CART = [];
 renderCart();
 closeModal();
 closeDrawer();
-openOrderSuccessBox(data.order);
+openOrderSuccessBox(data.order || data);
 toast("Pedido enviado ✅");
-    }
+
+// mostra a confirmação primeiro, depois manda pro WhatsApp
+setTimeout(() => {
+  window.location.href = url;
+    }, 1000);
+
+
+  } finally {
+  IS_SENDING_ORDER = false;
+  setOrderButtonLoading(false);
+  closeOrderSendingBox();
+}
+}
+
+    
+    
 
 
 
