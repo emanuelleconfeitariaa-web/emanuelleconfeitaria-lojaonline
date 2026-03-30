@@ -2564,7 +2564,7 @@ function setupCropCanvasDrag(){
 
   function startDrag(e){
     if(!CURRENT_CROP_IMG) return;
-    if(CURRENT_CROP_MODE !== "banner-free") return;
+    if(CURRENT_CROP_MODE !== "banner-free" && CURRENT_CROP_MODE !== "product-free") return;
     if(e.button !== undefined && e.button !== 0) return;
 
     const p = getCanvasPoint(e);
@@ -2694,7 +2694,7 @@ function openCropModal(targetKey, dataUrl, mode = "product"){
     CURRENT_CROP_X = (cw - drawW) / 2;
     CURRENT_CROP_Y = (ch - drawH) / 2;
 
-if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
+  if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
   resetFreeBannerCrop();
 }
     if(zoom){
@@ -2760,9 +2760,9 @@ function drawCropCanvas(){
     drawH
   );
 
-  if(CURRENT_CROP_MODE === "banner-free"){
-    clampFreeCropToCanvas();
-  }
+if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
+  clampFreeCropToCanvas();
+}
 
   const { cropX, cropY, cropW, cropH } = getCropRect();
 
@@ -2778,7 +2778,7 @@ function drawCropCanvas(){
   ctx.lineWidth = 2;
   ctx.strokeRect(cropX, cropY, cropW, cropH);
 
-if(CURRENT_CROP_MODE === "banner-free"){
+if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
   const s = 18;
   const handles = [
     [cropX, cropY],                         // canto sup esquerdo
@@ -2822,7 +2822,7 @@ function applyCropResult(){
   const sw = Math.min(img.width - sx, cropW / scale);
   const sh = Math.min(img.height - sy, cropH / scale);
 
- const out = document.createElement("canvas");
+const out = document.createElement("canvas");
 
 if(CURRENT_CROP_MODE === "banner-free"){
   out.width = 3360;
@@ -2903,7 +2903,6 @@ function bindCropInputById(inputId){
     }
   });
 }
-
 
 
 
