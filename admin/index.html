@@ -1989,14 +1989,14 @@ function getCropRect(){
   const cw = canvas.width;
   const ch = canvas.height;
 
-  if(CURRENT_CROP_MODE === "banner-free"){
-    return {
-      cropX: CURRENT_FREE_CROP_X,
-      cropY: CURRENT_FREE_CROP_Y,
-      cropW: CURRENT_FREE_CROP_W,
-      cropH: CURRENT_FREE_CROP_H
-    };
-  }
+if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
+  return {
+    cropX: CURRENT_FREE_CROP_X,
+    cropY: CURRENT_FREE_CROP_Y,
+    cropW: CURRENT_FREE_CROP_W,
+    cropH: CURRENT_FREE_CROP_H
+  };
+}
 
   const cropW = Math.min(520, cw - 60);
   const cropH = Math.round(cropW * 0.72);
@@ -2694,10 +2694,9 @@ function openCropModal(targetKey, dataUrl, mode = "product"){
     CURRENT_CROP_X = (cw - drawW) / 2;
     CURRENT_CROP_Y = (ch - drawH) / 2;
 
-    if(CURRENT_CROP_MODE === "banner-free"){
-      resetFreeBannerCrop();
-    }
-
+if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
+  resetFreeBannerCrop();
+}
     if(zoom){
       zoom.min = String(CURRENT_CROP_MIN_SCALE);
       zoom.max = String(CURRENT_CROP_MAX_SCALE);
@@ -2823,38 +2822,42 @@ function applyCropResult(){
   const sw = Math.min(img.width - sx, cropW / scale);
   const sh = Math.min(img.height - sy, cropH / scale);
 
-  const out = document.createElement("canvas");
+ const out = document.createElement("canvas");
 
- if(CURRENT_CROP_MODE === "banner-free"){
-  // mesma proporção do banner, mas com resolução maior
-  out.width = 3360;   // 24
-  out.height = 980;   // 7
+if(CURRENT_CROP_MODE === "banner-free"){
+  out.width = 3360;
+  out.height = 980;
+}else if(CURRENT_CROP_MODE === "product-free"){
+  const maxSide = 1600;
+
+  if(sw >= sh){
+    out.width = maxSide;
+    out.height = Math.max(1, Math.round((sh / sw) * maxSide));
+  }else{
+    out.height = maxSide;
+    out.width = Math.max(1, Math.round((sw / sh) * maxSide));
+  }
 }else{
   out.width = 1600;
   out.height = 1152;
 }
 
 const octx = out.getContext("2d");
-
-// melhora a qualidade do redimensionamento
 octx.imageSmoothingEnabled = true;
 octx.imageSmoothingQuality = "high";
 
-// fundo branco apenas para imagens de produto
-if(CURRENT_CROP_MODE !== "banner-free"){
+if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
+  octx.clearRect(0, 0, out.width, out.height);
+}else{
   octx.fillStyle = "#fff";
   octx.fillRect(0, 0, out.width, out.height);
-}else{
-  octx.clearRect(0, 0, out.width, out.height);
 }
 
 octx.drawImage(img, sx, sy, sw, sh, 0, 0, out.width, out.height);
 
-// banner em PNG = mais nitidez, menos artefato em texto/arte
-const result = (CURRENT_CROP_MODE === "banner-free")
+const result = (CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free")
   ? out.toDataURL("image/png")
   : out.toDataURL("image/jpeg", 0.97);
-
   if(CURRENT_CROP_TARGET === "uiBannerImg"){
     bannerImageDataUrl = result;
 
@@ -2892,13 +2895,14 @@ function bindCropInputById(inputId){
 
     try{
       const dataUrl = await fileToDataURL(file);
-      openCropModal(inputId, dataUrl);
+
+      const isProductImage = ["pImgFile1","pImgFile2","eImgFile1","eImgFile2"].includes(String(inputId));
+      openCropModal(inputId, dataUrl, isProductImage ? "product-free" : "product");
     }catch{
       alert("Não foi possível abrir a imagem para recorte.");
     }
   });
 }
-
 
 
 
