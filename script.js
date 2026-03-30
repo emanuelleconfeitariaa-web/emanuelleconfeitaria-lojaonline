@@ -2259,16 +2259,17 @@ document.getElementById("hoursModal")?.addEventListener("click", (e)=>{
 });
 
 
-    document.addEventListener("DOMContentLoaded", async ()=>{
-      await loadSettings();
-      await loadProducts();
-      await loadCategories();
-      await loadSettings();
-      applyReviewsLink();
-      buildCategories();
-      render();
-      renderCart();
+document.addEventListener("DOMContentLoaded", async ()=>{
+  await Promise.all([
+    loadSettings(),
+    loadProducts(),
+    loadCategories()
+  ]);
 
+  applyReviewsLink();
+  buildCategories();
+  render();
+  renderCart();
 
      $("q")?.addEventListener("input", ()=>{
         SEARCH = $("q").value.trim();
