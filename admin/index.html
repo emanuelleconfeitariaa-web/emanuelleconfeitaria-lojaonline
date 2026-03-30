@@ -2825,10 +2825,10 @@ function applyCropResult(){
 const out = document.createElement("canvas");
 
 if(CURRENT_CROP_MODE === "banner-free"){
-  out.width = 3360;
-  out.height = 980;
+  out.width = 1600;
+  out.height = 467;
 }else if(CURRENT_CROP_MODE === "product-free"){
-  const maxSide = 1600;
+  const maxSide = 900;
 
   if(sw >= sh){
     out.width = maxSide;
@@ -2838,26 +2838,27 @@ if(CURRENT_CROP_MODE === "banner-free"){
     out.width = Math.max(1, Math.round((sw / sh) * maxSide));
   }
 }else{
-  out.width = 1600;
-  out.height = 1152;
+  out.width = 1000;
+  out.height = 720;
 }
 
 const octx = out.getContext("2d");
 octx.imageSmoothingEnabled = true;
 octx.imageSmoothingQuality = "high";
 
-if(CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free"){
-  octx.clearRect(0, 0, out.width, out.height);
-}else{
-  octx.fillStyle = "#fff";
-  octx.fillRect(0, 0, out.width, out.height);
-}
+octx.fillStyle = "#fff";
+octx.fillRect(0, 0, out.width, out.height);
 
 octx.drawImage(img, sx, sy, sw, sh, 0, 0, out.width, out.height);
 
-const result = (CURRENT_CROP_MODE === "banner-free" || CURRENT_CROP_MODE === "product-free")
-  ? out.toDataURL("image/png")
-  : out.toDataURL("image/jpeg", 0.97);
+let result = "";
+if(CURRENT_CROP_MODE === "banner-free"){
+  result = out.toDataURL("image/jpeg", 0.78);
+}else if(CURRENT_CROP_MODE === "product-free"){
+  result = out.toDataURL("image/jpeg", 0.82);
+}else{
+  result = out.toDataURL("image/jpeg", 0.85);
+}
   if(CURRENT_CROP_TARGET === "uiBannerImg"){
     bannerImageDataUrl = result;
 
@@ -3846,9 +3847,12 @@ function renderEditImagePreviews(){
   }
 }
 
-function openEdit(id){
+async function openEdit(id){
   editingId = String(id);
-  editingCurrent = PRODUCTS.find(p => String(p.id) === editingId);
+
+  const res = await apiFetch("/api/products/" + encodeURIComponent(editingId));
+  editingCurrent = await res.json();
+
   if(!editingCurrent) return;
 
   const editImages = Array.isArray(editingCurrent.images)
