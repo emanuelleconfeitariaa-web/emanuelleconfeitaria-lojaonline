@@ -5607,10 +5607,12 @@ payload.business_hours = {
 }
 
           }
-          if(t.dataset.tab==="products"){
-            await loadCategories();
-            await loadProducts();
-          }
+if(t.dataset.tab==="products"){
+  await Promise.all([
+    loadCategories(),
+    loadProducts()
+  ]);
+}
           if(t.dataset.tab==="clients"){
             await loadClients();
           }
@@ -5632,13 +5634,15 @@ payload.business_hours = {
       });
 
       // topo
-      $("refreshBtn").addEventListener("click", async ()=>{
-        await loadSettings();
-        await loadCategories();
-        await loadProducts();
-        await loadOrders();
-        await loadClients();
-      });
+$("refreshBtn").addEventListener("click", async ()=>{
+  await Promise.all([
+    loadSettings(),
+    loadCategories(),
+    loadProducts(),
+    loadOrders(),
+    loadClients()
+  ]);
+});
 
       $("testSoundBtn").addEventListener("click", playNotify);
 
