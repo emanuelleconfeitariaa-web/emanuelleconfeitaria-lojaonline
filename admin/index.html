@@ -6712,36 +6712,36 @@ function closePdvStore(){
 }
 
 
-window.addEventListener("message", (event) => {
-  const data = event.data;
-  if (!data || data.type !== "PDV_CART") return;
+window.addEventListener("message", async (ev)=>{
+  const data = ev.data;
+  if(!data || data.type !== "PDV_CART") return;
 
   const cart = Array.isArray(data.cart) ? data.cart : [];
 
-CO_ITEMS.length = 0;
-CO_ITEMS.push(...cart.map(it => ({
-  product_id: it.product_id || it.pid || it.id || "",
-  name: String(it.name || ""),
-  price: Number(it.price || 0),
-  qty: Math.max(1, Number(it.qty || 1)),
-  addons: Array.isArray(it.addons) ? it.addons : [],
-  flavor: String(it.flavor || "")
-})));
-
-  renderCOItems();
-
-  closePdvStore();
-
-  const total = Number(data.total || 0);
-  const shipping = Number($("coShipping")?.value || 0);
-  const totalLine = $("coTotalLine");
-  if (totalLine) {
-    totalLine.textContent = `Total: ${money(total + shipping)}`;
+  try{
+    if(!Array.isArray(CLIENTS) || CLIENTS.length === 0){
+      await loadClients();
+    }
+  } catch(e){
+    console.warn("Falha ao carregar clientes:", e);
   }
 
-  toast?.("Itens trazidos da loja ✅");
-});
+  renderPdvCartFromStore(cart);
 
+  if (typeof renderCOItems === "function") {
+  renderCOItems();
+}
+
+  const dl = document.getElementById("clientsDatalist");
+  if (typeof rebuildClientsDatalist === "function" && dl && dl.children.length === 0) {
+    rebuildClientsDatalist();
+  }
+
+  document.getElementById("coSearchClient")?.focus();
+
+  showModal("createOrderModal", true);
+  closePdvStore();
+});
 
 
 
