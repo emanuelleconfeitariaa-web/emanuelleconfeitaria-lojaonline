@@ -212,9 +212,10 @@ async function useExactLocation(){
         lon: Number(pos.coords.longitude)
       };
 
-      if(geoMsg){
-        geoMsg.textContent = "Localização capturada com sucesso.";
-      }
+if(geoMsg){
+  geoMsg.style.display = "block";
+  geoMsg.textContent = "Localização exata capturada. O frete será calculado com base no seu GPS.";
+}
 
       if(String($("type")?.value || "") === "ENTREGA"){
         await quoteShippingByAddress();
@@ -1283,7 +1284,7 @@ async function quoteShippingByAddress(){
   try{
 const payload = { address };
 
-if (CUSTOMER_GEO) {
+if (CUSTOMER_GEO && isFinite(Number(CUSTOMER_GEO.lat)) && isFinite(Number(CUSTOMER_GEO.lon))) {
   payload.location = {
     lat: Number(CUSTOMER_GEO.lat),
     lng: Number(CUSTOMER_GEO.lon)
