@@ -240,6 +240,30 @@ if(geoMsg){
       maximumAge: 0
     }
   );
+
+
+$("type")?.addEventListener("change", async ()=>{
+  const isEntrega = String($("type")?.value || "") === "ENTREGA";
+  const geoMsg = $("geoMsg");
+
+  if (!isEntrega) {
+    CUSTOMER_GEO = null;
+
+    if (geoMsg) {
+      geoMsg.style.display = "none";
+      geoMsg.textContent = "";
+    }
+
+    DYNAMIC_SHIPPING = null;
+    renderCart();
+    return;
+  }
+
+  if (CUSTOMER_GEO) {
+    await quoteShippingByAddress();
+  }
+});
+
 }
 
 
