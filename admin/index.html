@@ -197,36 +197,177 @@
 
     /* Lists */
     .list{ display:flex; flex-direction:column; gap: 10px; }
-    .item{
-      border: 1px solid rgba(0,0,0,.10);
-      background: rgba(255,255,255,.92);
-      border-radius: 16px;
-      padding: 12px;
-      display:flex;
-      gap: 12px;
-      align-items:flex-start;
-      justify-content:space-between;
-    }
+.item{
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.92);
+  border-radius: 16px;
+  padding: 12px;
+  display:flex;
+  gap: 12px;
+  align-items:flex-start;
+  justify-content:space-between;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.item:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0,0,0,.08);
+}
     .item[role="button"]{ cursor:pointer; }
     .itemLeft{ flex:1; min-width:0; }
     .itemTitle{ font-weight: 1000; }
     .itemSub{ color: var(--muted); font-size: 12px; margin-top: 4px; line-height: 1.25; }
     .itemRight{ display:flex; gap: 8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
 
-    .pill{
-      border-radius: 999px;
-      padding: 6px 10px;
-      border: 1px solid rgba(0,0,0,.12);
-      background: rgba(246,235,229,.70);
-      font-weight: 1000;
-      font-size: 12px;
-      color: var(--text);
-      white-space: nowrap;
-    }
-    .pill.new{ background: rgba(255,77,109,.10); border-color: rgba(255,77,109,.22); color:#7b1b1b; }
-    .pill.accepted{ background: rgba(93,255,146,.12); border-color: rgba(93,255,146,.25); color:#165a2c; }
-    .pill.rejected{ background: rgba(0,0,0,.06); }
-    .pill.done{ background: rgba(108,143,255,.12); border-color: rgba(108,143,255,.25); color:#17306b; }
+.item.orderStatusCard{
+  position: relative;
+  overflow: hidden;
+  padding-left: 18px;
+}
+
+.item.orderStatusCard::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.10);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.04);
+}
+
+.item.orderStatusCard.status-novo::before{
+  background: linear-gradient(180deg, #ff4d6d, #ff8aa0);
+}
+
+.item.orderStatusCard.status-aceito::before{
+  background: linear-gradient(180deg, #22c55e, #86efac);
+}
+
+.item.orderStatusCard.status-saiu::before{
+  background: linear-gradient(180deg, #f59e0b, #fde68a);
+}
+
+.item.orderStatusCard.status-recusado::before{
+  background: linear-gradient(180deg, #6b7280, #9ca3af);
+}
+
+.item.orderStatusCard.status-cancelado::before{
+  background: linear-gradient(180deg, #9ca3af, #d1d5db);
+}
+
+.item.orderStatusCard.status-concluido::before{
+  background: linear-gradient(180deg, #3b82f6, #93c5fd);
+}
+
+.item.orderStatusCard.status-pago::before{
+  background: linear-gradient(180deg, #10b981, #6ee7b7);
+}
+
+
+
+
+.item.orderStatusCard.status-novo{
+  background: linear-gradient(180deg, rgba(255,77,109,.08), rgba(255,255,255,.92));
+}
+
+.item.orderStatusCard.status-aceito{
+  background: linear-gradient(180deg, rgba(34,197,94,.08), rgba(255,255,255,.92));
+}
+
+.item.orderStatusCard.status-saiu{
+  background: linear-gradient(180deg, rgba(245,158,11,.10), rgba(255,255,255,.92));
+}
+
+.item.orderStatusCard.status-recusado{
+  background: linear-gradient(180deg, rgba(107,114,128,.08), rgba(255,255,255,.92));
+}
+
+.item.orderStatusCard.status-cancelado{
+  background: linear-gradient(180deg, rgba(156,163,175,.08), rgba(255,255,255,.92));
+}
+
+.item.orderStatusCard.status-concluido{
+  background: linear-gradient(180deg, rgba(59,130,246,.08), rgba(255,255,255,.92));
+}
+
+.item.orderStatusCard.status-pago{
+  background: linear-gradient(180deg, rgba(16,185,129,.10), rgba(255,255,255,.92));
+}
+
+
+
+
+    
+.pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 7px 12px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(246,235,229,.85);
+  font-weight: 1000;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text);
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0,0,0,.06);
+}
+
+.pill::before{
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(0,0,0,.05);
+  flex: 0 0 8px;
+}
+
+.pill.new{
+  background: linear-gradient(180deg, rgba(255,77,109,.16), rgba(255,77,109,.08));
+  border-color: rgba(255,77,109,.28);
+  color: #8f1239;
+}
+
+.pill.accepted{
+  background: linear-gradient(180deg, rgba(93,255,146,.18), rgba(93,255,146,.08));
+  border-color: rgba(93,255,146,.30);
+  color: #166534;
+}
+
+.pill.out{
+  background: linear-gradient(180deg, rgba(255,183,3,.22), rgba(255,183,3,.10));
+  border-color: rgba(255,183,3,.32);
+  color: #8a5200;
+}
+
+.pill.rejected{
+  background: linear-gradient(180deg, rgba(107,114,128,.16), rgba(107,114,128,.08));
+  border-color: rgba(107,114,128,.24);
+  color: #4b5563;
+}
+
+.pill.canceled{
+  background: linear-gradient(180deg, rgba(156,163,175,.20), rgba(156,163,175,.10));
+  border-color: rgba(156,163,175,.28);
+  color: #374151;
+}
+
+.pill.done{
+  background: linear-gradient(180deg, rgba(108,143,255,.18), rgba(108,143,255,.08));
+  border-color: rgba(108,143,255,.28);
+  color: #17306b;
+}
+
+.pill.paid{
+  background: linear-gradient(180deg, rgba(16,185,129,.22), rgba(16,185,129,.10));
+  border-color: rgba(16,185,129,.34);
+  color: #065f46;
+}
 
     /* qty controls */
     .qty{
@@ -257,6 +398,7 @@
     .smallBtn.primary{ background: var(--primary); color:#fff; border-color: rgba(0,0,0,.06); }
     .smallBtn.danger{ background: #ff4d6d; color:#fff; border-color: rgba(0,0,0,.06); }
     .smallBtn.warn{ background: #ffb703; color:#1b130f; border-color: rgba(0,0,0,.06); }
+    .smallBtn.out{background: #ffcf5a;color: #5d3a00;border-color: rgba(0,0,0,.06);}
     .smallBtn:active{ transform: translateY(1px); }
 
     /* Modal backdrop (reuso) */
@@ -827,6 +969,7 @@
           <option value="TODOS">Todos</option>
           <option value="NOVO">Somente NOVOS</option>
           <option value="ACEITO">Aceitos</option>
+          <option value="SAIU_PARA_ENTREGA">Saiu para entrega</option>
           <option value="RECUSADO">Recusados</option>
           <option value="CANCELADO">Cancelados</option>
           <option value="CONCLUIDO">Concluídos</option>
@@ -3246,18 +3389,55 @@ function tabShow(key){
       }catch(e){}
     }
 
-    function statusPill(o){
-      const st = statusUpper(o);
-      if(st==="NOVO") return `<span class="pill new">NOVO</span>`;
-      if(st==="ACEITO") return `<span class="pill accepted">ACEITO</span>`;
-      if(st==="RECUSADO") return `<span class="pill rejected">RECUSADO</span>`;
-      if(st==="CANCELADO") return `<span class="pill rejected">CANCELADO</span>`;
-      if(st==="CONCLUIDO"){
-        return o.paid ? `<span class="pill done">PAGO ✅</span>` : `<span class="pill done">CONCLUÍDO</span>`;
-      }
-      return `<span class="pill">${escapeHtml(st)}</span>`;
-    }
+function statusPill(o){
+  const st = statusUpper(o);
 
+  if(st === "NOVO"){
+    return `<span class="pill new">Novo pedido</span>`;
+  }
+
+  if(st === "ACEITO"){
+    return `<span class="pill accepted">Em preparo</span>`;
+  }
+
+  if(st === "SAIU_PARA_ENTREGA"){
+    return `<span class="pill out">Saiu para entrega</span>`;
+  }
+
+  if(st === "RECUSADO"){
+    return `<span class="pill rejected">Recusado</span>`;
+  }
+
+  if(st === "CANCELADO"){
+    return `<span class="pill canceled">Cancelado</span>`;
+  }
+
+  if(st === "CONCLUIDO"){
+    return o.paid
+      ? `<span class="pill paid">Pago ✅</span>`
+      : `<span class="pill done">Concluído</span>`;
+  }
+
+  return `<span class="pill">${escapeHtml(st)}</span>`;
+}
+
+
+function orderStatusCardClass(o){
+  const st = statusUpper(o);
+
+  if(st === "NOVO") return "status-novo";
+  if(st === "ACEITO") return "status-aceito";
+  if(st === "SAIU_PARA_ENTREGA") return "status-saiu";
+  if(st === "RECUSADO") return "status-recusado";
+  if(st === "CANCELADO") return "status-cancelado";
+  if(st === "CONCLUIDO") return o.paid ? "status-pago" : "status-concluido";
+
+  return "";
+}
+
+
+
+  
     function orderHtml(o){
       const items = Array.isArray(o.items) ? o.items : [];
       const itTxt = items.map(it=>`${Number(it.qty ?? it.quantity ?? 0)}x ${(it.name || it.product_name || it.product || "Item")}`).join(" • ");
@@ -3272,24 +3452,30 @@ function tabShow(key){
 
       const st = statusUpper(o);
 
-      const controls = (st==="NOVO")
-        ? `
-          <button class="smallBtn primary" data-accept="${o.id}">Aceitar</button>
-          <button class="smallBtn danger" data-reject="${o.id}">Recusar</button>
+const controls =
+  st === "NOVO"
+    ? `
+        <button class="smallBtn ok" data-accept="${o.id}">Aceitar</button>
+        <button class="smallBtn danger" data-reject="${o.id}">Recusar</button>
+      `
+    : st === "ACEITO"
+      ? `
+         <button class="smallBtn out" data-out="${o.id}">Saiu para entrega</button>
+          <button class="smallBtn warn" data-pay="${o.id}">Pago</button>
+          <button class="smallBtn" data-done="${o.id}">Concluir (sem pago)</button>
           <button class="smallBtn" data-cancel="${o.id}">Cancelar</button>
         `
-        : (st==="ACEITO")
-          ? `
+      : st === "SAIU_PARA_ENTREGA"
+        ? `
             <button class="smallBtn warn" data-pay="${o.id}">Pago</button>
             <button class="smallBtn" data-done="${o.id}">Concluir (sem pago)</button>
-            <button class="smallBtn" data-cancel="${o.id}">Cancelar</button>
           `
-          : (st==="CONCLUIDO" && !o.paid)
-            ? `<button class="smallBtn warn" data-pay="${o.id}">Marcar como pago</button>`
-            : "";
+        : (st === "CONCLUIDO" && !o.paid)
+          ? `<button class="smallBtn warn" data-pay="${o.id}">Marcar como pago</button>`
+          : "";
 
       return `
-        <div class="item" role="button" tabindex="0" data-open-order="${o.id}">
+      <div class="item orderStatusCard ${orderStatusCardClass(o)}" role="button" tabindex="0" data-open-order="${o.id}">
           <div class="itemLeft">
             <div class="itemTitle">${escapeHtml(name)} • ${money(total)}</div>
             <div class="itemSub">
@@ -3340,12 +3526,25 @@ if(!list.length){
   stopOrderAlertLoop();
   setOrderStatus(b.dataset.reject,"RECUSADO");
 }));
+
+
+box.querySelectorAll("[data-out]").forEach(b =>
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setOrderStatus(b.dataset.out, "SAIU_PARA_ENTREGA");
+  })
+);
+
+  
       box.querySelectorAll("[data-cancel]").forEach(b=>b.addEventListener("click",(e)=>{ e.stopPropagation(); setOrderStatus(b.dataset.cancel,"CANCELADO"); }));
       box.querySelectorAll("[data-done]").forEach(b=>b.addEventListener("click",(e)=>{ e.stopPropagation(); setOrderStatus(b.dataset.done,"CONCLUIDO"); }));
       box.querySelectorAll("[data-pay]").forEach(b=>b.addEventListener("click",(e)=>{ e.stopPropagation(); payOrder(b.dataset.pay); }));
       syncOrderAlertWithState();
     }
 
+
+
+  
 async function setOrderStatus(id, status){
   const nextStatus = String(status || "").toUpperCase();
 
@@ -3353,12 +3552,12 @@ async function setOrderStatus(id, status){
     stopOrderAlertLoop();
   }
 
-  const cur = ORDERS.find(o=>String(o.id)===String(id));
+  const cur = ORDERS.find(o => String(o.id) === String(id));
   const prevStatus = cur ? statusUpper(cur) : "";
 
- const res = await apiFetch("/api/orders/" + encodeURIComponent(id) + "/status",{
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
+  const res = await apiFetch("/api/orders/" + encodeURIComponent(id) + "/status", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status })
   });
 
@@ -3369,8 +3568,18 @@ async function setOrderStatus(id, status){
     return;
   }
 
+  let updatedOrder = null;
+  try{
+    const data = await res.json();
+    updatedOrder = data?.order || null;
+  }catch(_e){}
+
   if(cur){
     cur.status = nextStatus;
+
+    if(updatedOrder){
+      Object.assign(cur, updatedOrder);
+    }
   }
 
   if(prevStatus === "NOVO" && newCount > 0){
@@ -3383,8 +3592,104 @@ async function setOrderStatus(id, status){
   await loadOrders();
   renderOrders();
   syncOrderAlertWithState();
+
+  const order =
+    ORDERS.find(o => String(o.id) === String(id)) ||
+    updatedOrder ||
+    cur ||
+    null;
+
+  if(order && ["ACEITO", "SAIU_PARA_ENTREGA", "CONCLUIDO", "RECUSADO", "CANCELADO"].includes(nextStatus)){
+    openCustomerWhatsApp(order, nextStatus);
+  }
 }
 
+
+
+
+function waPhoneOnly(s){
+  return String(s || "").replace(/\D+/g, "");
+}
+
+function formatOrderCode(order){
+  return String(
+    order?.order_number ||
+    order?.number ||
+    order?.id ||
+    ""
+  ).trim();
+}
+
+function statusLabelPt(status){
+  const s = String(status || "").toUpperCase();
+
+  if(s === "NOVO") return "Novo";
+  if(s === "ACEITO") return "Aceito";
+  if(s === "SAIU_PARA_ENTREGA") return "Saiu para entrega";
+  if(s === "RECUSADO") return "Recusado";
+  if(s === "CANCELADO") return "Cancelado";
+  if(s === "CONCLUIDO") return "Concluído";
+
+  return s;
+}
+
+function buildCustomerStatusMessage(order, status){
+  const s = String(status || "").toUpperCase();
+  const name = String(order?.customer_name || "cliente").trim();
+  const code = formatOrderCode(order);
+  const shop = String(SETTINGS?.shop_name || "Emanuelle Confeitaria").trim();
+
+  const hello = `Olá, ${name}!`;
+  const orderLine = code ? `Pedido #${code}` : `Seu pedido`;
+
+  if(s === "ACEITO"){
+    return `${hello} ${orderLine} foi aceito e já está em preparação. 💖\n\n${shop}`;
+  }
+
+  if(s === "SAIU_PARA_ENTREGA"){
+    return `${hello} ${orderLine} saiu para entrega e logo chegará até você. 🛵🍰\n\n${shop}`;
+  }
+
+  if(s === "CONCLUIDO"){
+    return `${hello} ${orderLine} foi concluído com sucesso. Obrigado pela preferência! 💕\n\n${shop}`;
+  }
+
+  if(s === "RECUSADO"){
+    return `${hello} infelizmente ${orderLine} não pôde ser aceito no momento.\n\nSe quiser, fale conosco para verificar outra opção.\n\n${shop}`;
+  }
+
+  if(s === "CANCELADO"){
+    return `${hello} ${orderLine} foi cancelado.\n\nSe precisar, fale conosco para mais detalhes.\n\n${shop}`;
+  }
+
+  return `${hello} o status do seu pedido agora é: ${statusLabelPt(s)}.\n\n${shop}`;
+}
+
+function openCustomerWhatsApp(order, status){
+  const rawPhone =
+    order?.customer_phone ||
+    order?.phone ||
+    "";
+
+  const phone = waPhoneOnly(rawPhone);
+  if(!phone){
+    toast("Pedido sem WhatsApp do cliente.");
+    return;
+  }
+
+  const msg = buildCustomerStatusMessage(order, status);
+  const url = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
+
+  window.open(url, "_blank");
+}
+
+
+
+
+
+
+
+  
 async function payOrder(id){
  const res = await apiFetch("/api/orders/" + encodeURIComponent(id) + "/pay",{ method:"PUT" });
 
@@ -5650,13 +5955,24 @@ $("refreshBtn").addEventListener("click", async ()=>{
 
       $("testSoundBtn").addEventListener("click", playNotify);
 
-      $("openStoreBtn").addEventListener("click", async ()=>{
-        try{
-          await window.electronAPI.openStore();
-        }catch{
-          alert("Não foi possível abrir a loja (preload não disponível).");
-        }
-      });
+$("openStoreBtn").addEventListener("click", async ()=>{
+  let base =
+    String(SETTINGS?.store_url || "").trim() ||
+    "https://emanuelleconfeitariaa-web.github.io/emanuelle-loja/";
+
+  if(!base.endsWith("/")){
+    base += "/";
+  }
+
+  if(window.electronAPI?.openStore){
+    try{
+      await window.electronAPI.openStore();
+      return;
+    }catch(_e){}
+  }
+
+  window.open(base, "_blank", "noopener,noreferrer");
+});
 
       // produtos
       $("saveProductBtn").addEventListener("click", createProduct);
@@ -6352,9 +6668,13 @@ function openPdvStore(){
   const back = document.getElementById("pdvStoreBack");
   const frame = document.getElementById("pdvStoreFrame");
 
-  const base =
+  let base =
     String(SETTINGS?.store_url || "").trim() ||
-    "https://emanuelleconfeitariaa-web.github.io/"; //CRIAR PEDIDO MANUAL//
+    "https://emanuelleconfeitariaa-web.github.io/emanuelle-loja/";
+
+  if(!base.endsWith("/")){
+    base += "/";
+  }
 
   const sep = base.includes("?") ? "&" : "?";
   frame.src = `${base}${sep}pdv=1&t=${Date.now()}`;
@@ -6381,14 +6701,15 @@ window.addEventListener("message", (event) => {
 
   const cart = Array.isArray(data.cart) ? data.cart : [];
 
-  CO_ITEMS = cart.map(it => ({
-    product_id: it.product_id || it.pid || it.id || "",
-    name: String(it.name || ""),
-    price: Number(it.price || 0),
-    qty: Math.max(1, Number(it.qty || 1)),
-    addons: Array.isArray(it.addons) ? it.addons : [],
-    flavor: String(it.flavor || "")
-  }));
+CO_ITEMS.length = 0;
+CO_ITEMS.push(...cart.map(it => ({
+  product_id: it.product_id || it.pid || it.id || "",
+  name: String(it.name || ""),
+  price: Number(it.price || 0),
+  qty: Math.max(1, Number(it.qty || 1)),
+  addons: Array.isArray(it.addons) ? it.addons : [],
+  flavor: String(it.flavor || "")
+})));
 
   renderCOItems();
 
@@ -6432,62 +6753,6 @@ document.addEventListener("DOMContentLoaded", () => {
       closePdvStore();
     }
   });
-});
-
-
-
-function renderPdvCartFromStore(cart){
-  // ✅ aqui vamos colocar os itens no array do modal
-  // vou usar CO_ITEMS como padrão; se o seu usa outro nome me diga.
-  CO_ITEMS.length = 0;
-  CO_ITEMS.push(...(cart || []).map(it => ({
-  product_id: it.product_id,
-  name: it.name,
-  price: Number(it.price || 0),
-  qty: Number(it.qty || 1),
-  addons: it.addons || []
-})));
-
-  // atualiza a lista do modal
-  if (typeof renderCOItems === "function") renderCOItems();
-}
-
-window.addEventListener("message", async (ev)=>{
-  const data = ev.data;
-  if(!data || data.type !== "PDV_CART") return;
-
-  const cart = Array.isArray(data.cart) ? data.cart : [];
-
-  // ✅ garante clientes carregados
-  try{
-    if(!Array.isArray(CLIENTS) || CLIENTS.length === 0){
-      await loadClients();
-    }
-  } catch(e){
-    console.warn("Falha ao carregar clientes:", e);
-  }
-
-  // ✅ joga os itens no modal
-  renderPdvCartFromStore(cart);
-
-  // ✅ só rebuild se o datalist ainda estiver vazio (evita demora)
-  const dl = document.getElementById("clientsDatalist");
-  if (typeof rebuildClientsDatalist === "function" && dl && dl.children.length === 0) {
-    rebuildClientsDatalist();
-  }
-
-  // opcional: deixa o foco já no campo de busca
-  document.getElementById("coSearchClient")?.focus();
-
-  // ✅ abre o modal e fecha a loja
-  showModal("createOrderModal", true);
-  closePdvStore();
-});
-
-
-document.getElementById("pdvStoreClose")?.addEventListener("click", closePdvStore);
-document.getElementById("pdvStoreBack")?.addEventListener("click", (e)=>{
-  if(e.target.id === "pdvStoreBack") closePdvStore();
 });
 
 
