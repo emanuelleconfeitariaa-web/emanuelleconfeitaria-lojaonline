@@ -1281,14 +1281,14 @@ async function quoteShippingByAddress(){
   }
 
   try{
-    const payload = { address };
+const payload = { address };
 
-    if (window.CUSTOMER_LOCATION) {
-      payload.location = {
-        lat: Number(window.CUSTOMER_LOCATION.lat),
-        lng: Number(window.CUSTOMER_LOCATION.lng)
-      };
-    }
+if (CUSTOMER_GEO) {
+  payload.location = {
+    lat: Number(CUSTOMER_GEO.lat),
+    lng: Number(CUSTOMER_GEO.lon)
+  };
+}
 
     const res = await fetch(API + "/api/shipping/quote", {
       method: "POST",
