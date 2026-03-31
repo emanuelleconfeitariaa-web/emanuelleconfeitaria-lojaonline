@@ -6524,15 +6524,32 @@ function parseClientFromSearch(val){
 
   return best || matches[0];
 }
+
+
 $("openCreateOrder").addEventListener("click", async ()=>{
-  const base =
-    String(SETTINGS?.store_url || "").trim() ||
-    "https://emanuelleconfeitariaa-web.github.io/";
+  CO_ITEMS.length = 0;
+  renderCOItems();
 
-  const sep = base.includes("?") ? "&" : "?";
-  const url = `${base}${sep}pdv=1`;
+  $("coSearchClient").value = "";
+  $("coName").value = "";
+  $("coPhone").value = "";
+  $("coAddress").value = "";
+  $("coService").value = "Delivery";
+  $("coShipping").value = "0";
+  $("coNotes").value = "";
+  $("coPayMethod").value = "Pix";
+  $("coPayStatus").value = "NAO_PAGO";
+  $("coSearchProduct").value = "";
 
-  window.open(url, "_blank", "noopener");
+  if (typeof rebuildClientsDatalist === "function") {
+    rebuildClientsDatalist();
+  }
+
+  if (typeof rebuildCOProducts === "function") {
+    rebuildCOProducts($("coSearchProduct").value);
+  }
+
+  openPdvStore();
 });
 
       $("coSearchClient").value = "";
