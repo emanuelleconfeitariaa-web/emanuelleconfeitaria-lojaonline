@@ -1364,7 +1364,18 @@
         <input type="file" id="adminLogoFile" accept="image/*" />
         <div class="hint">PNG/JPG. A logo fica salva nas configurações e aparece apenas no Admin.</div>
         <img id="adminLogoPreview" style="display:none; max-height:52px; margin-top:10px; border-radius:10px;" />
+<div class="card" style="margin-top:12px;">
+  <h3>Pagamento Pix</h3>
+  <div class="muted">A chave cadastrada aqui será exibida no checkout da loja.</div>
 
+  <label>Texto do bloco Pix</label>
+  <input id="pixLabel" placeholder="Ex: CHAVE PIX DA LOJA" />
+
+  <label>Chave Pix</label>
+  <input id="pixKey" placeholder="Ex: 15177948706" />
+
+  <div class="hint">Você pode usar CPF, e-mail, telefone ou chave aleatória.</div>
+</div>
 
         <button class="btn btnPrimary" id="saveSettings" style="margin-top:12px;width:100%;">Salvar configurações</button>
       </div>
@@ -3287,6 +3298,10 @@ setValue("adBg",        adTh.bg        || (SETTINGS.theme && SETTINGS.theme.bg) 
       adminBgDataUrl = au.bg_image_dataurl || null;
       const prevA = $("adBgPreview");
 const img = adminBgDataUrl;
+
+
+if ($("pixLabel")) $("pixLabel").value = SETTINGS.pix_label || "CHAVE PIX DA LOJA";
+if ($("pixKey")) $("pixKey").value = SETTINGS.pix_key || "";
 
 if (prevA) {
   if (img) {
@@ -5817,6 +5832,8 @@ async function saveSettings(){
       store_url: ($("store_url")?.value || "").trim(),
       preview_whatsapp_url: ($("preview_whatsapp_url")?.value || "").trim(),
       address_base: ($("sAddr")?.value || "").trim(),
+      pix_label: $("pixLabel")?.value.trim() || "CHAVE PIX DA LOJA",
+      pix_key: $("pixKey")?.value.trim() || "",
       default_shipping: Number($("defaultShipping")?.value || 0),
 
       instagram_url: ((document.getElementById("sInstagram")?.value || "").trim() || (base.instagram_url || "")),
