@@ -6712,6 +6712,20 @@ function closePdvStore(){
 }
 
 
+function renderPdvCartFromStore(cart){
+  CO_ITEMS.length = 0;
+  CO_ITEMS.push(...(cart || []).map(it => ({
+    product_id: it.product_id || it.pid || it.id,
+    name: it.name,
+    price: Number(it.price || 0),
+    qty: Number(it.qty || 1),
+    addons: Array.isArray(it.addons) ? it.addons : [],
+    flavor: String(it.flavor || "")
+  })));
+}
+  
+
+  
 window.addEventListener("message", async (ev)=>{
   const data = ev.data;
   if(!data || data.type !== "PDV_CART") return;
