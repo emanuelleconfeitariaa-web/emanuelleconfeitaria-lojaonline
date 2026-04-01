@@ -212,7 +212,7 @@ async function useExactLocation(){
         lon: Number(pos.coords.longitude)
       };
 
-if(geoMsg){
+  if(geoMsg){
   geoMsg.style.display = "block";
   geoMsg.textContent = "Localização exata capturada. O frete será calculado com base no seu GPS.";
 }
@@ -240,7 +240,6 @@ if(geoMsg){
       maximumAge: 0
     }
   );
-
 
 $("type")?.addEventListener("change", async ()=>{
   const isEntrega = String($("type")?.value || "") === "ENTREGA";
@@ -1276,9 +1275,11 @@ function scheduleShippingQuote(delay = 700){
 
 
 async function quoteShippingByAddress(){
-  const msg = $("shippingMsg");
-  const type = String($("type")?.value || "RETIRADA");
-  const address = String($("addr")?.value || "").trim();
+const msg = $("shippingMsg");
+const type = String($("type")?.value || "RETIRADA");
+const address = type === "ENTREGA" ? buildCheckoutAddress().trim() : "";
+
+if($("addr")) $("addr").value = address;
 
   if(type !== "ENTREGA"){
     DYNAMIC_SHIPPING = 0;
@@ -1528,6 +1529,9 @@ function closeDrawer(){
 function openModal(){
   hideCartBar();
   $("modalBack").classList.add("open");
+  resetCheckoutAddressUI();
+  resetCheckoutPaymentUI();
+  refreshPixInfo();
   DYNAMIC_SHIPPING = null;
   try{
     const bh = SETTINGS?.business_hours;
@@ -1870,6 +1874,146 @@ function closeOrderSendingBox(){
 
 
 
+
+function getPickupAddressText(){
+  const s = SETTINGS || {};
+
+  const street = String(s.store_pickup_street || s.pickup_street || "").trim();
+  const number = String(s.store_pickup_number || s.pickup_number || "").trim();
+  const neighborhood = String(s.store_pickup_neighborhood || s.pickup_neighborhood || "").trim();
+  const city = String(s.store_pickup_city || s.pickup_city || "").trim();
+  const state = String(s.store_pickup_state || s.pickup_state || "").trim();
+  const zip = String(s.store_pickup_zip || s.pickup_zip || "").trim();
+  const fallback = String(s.address_base || "").trim();
+
+  const line1 = [street, number].filter(Boolean).join(", ");
+  const line2 = [neighborhood, [city, state].filter(Boolean).join(" / ")].filter(Boolean).join(" - ");
+  const line3 = zip ? ("CEP: " + zip) : "";
+
+  return [line1, line2, line3].filter(Boolean).join("<br>") || fallback || "Endereço da loja não informado.";
+}
+
+function setCheckoutType(type){
+  const isDelivery = String(type || "") === "ENTREGA";
+
+  if($("type")) $("type").value = isDelivery ? "ENTREGA" : "RETIRADA";
+
+  $("typeCardEntrega")?.classList.toggle("active", isDelivery);
+  $("typeCardRetirada")?.classList.toggle("active", !isDelivery);
+
+  $("deliveryFields")?.classList.toggle("checkoutHidden", !isDelivery);
+  $("pickupBox")?.classList.toggle("checkoutHidden", isDelivery);
+
+  const geoMsg = $("geoMsg");
+  if(!isDelivery){
+    CUSTOMER_GEO = null;
+    DYNAMIC_SHIPPING = 0;
+    if(geoMsg){
+      geoMsg.style.display = "block";
+      geoMsg.textContent = "Retirada: sem frete.";
+    }
+  }else{
+    DYNAMIC_SHIPPING = null;
+    if(geoMsg){
+      geoMsg.style.display = "none";
+      geoMsg.textContent = "";
+    }
+  }
+
+  renderCart();
+}
+
+function buildCheckoutAddress(){
+  const zip = $("addrZip")?.value.trim() || "";
+  const street = $("addrStreet")?.value.trim() || "";
+  const number = $("addrNumber")?.value.trim() || "";
+  const complement = $("addrComplement")?.value.trim() || "";
+  const neighborhood = $("addrNeighborhood")?.value.trim() || "";
+  const city = $("addrCity")?.value.trim() || "";
+  const state = $("addrState")?.value.trim() || "";
+
+  const line1 = [street, number].filter(Boolean).join(", ");
+  const line2 = [complement, neighborhood].filter(Boolean).join(" - ");
+  const line3 = [city, state].filter(Boolean).join(" / ");
+  const line4 = zip ? ("CEP: " + zip) : "";
+
+  return [line1, line2, line3, line4].filter(Boolean).join(" | ");
+}
+
+function resetCheckoutAddressUI(){
+  if($("addrZip")) $("addrZip").value = "";
+  if($("addrStreet")) $("addrStreet").value = "";
+  if($("addrNumber")) $("addrNumber").value = "";
+  if($("addrComplement")) $("addrComplement").value = "";
+  if($("addrNeighborhood")) $("addrNeighborhood").value = "";
+  if($("addrCity")) $("addrCity").value = "";
+  if($("addrState")) $("addrState").value = "";
+  if($("addr")) $("addr").value = "";
+
+  if($("pickupAddressText")){
+    $("pickupAddressText").innerHTML = getPickupAddressText();
+  }
+
+  setCheckoutType("ENTREGA");
+}
+
+
+
+
+
+
+function getPixKey(){
+  return String(
+    SETTINGS?.pix_key ||
+    SETTINGS?.payment_pix_key ||
+    ""
+  ).trim();
+}
+
+function getPixLabel(){
+  return String(
+    SETTINGS?.pix_label ||
+    "CHAVE PIX DA LOJA"
+  ).trim();
+}
+
+function refreshPixInfo(){
+  const key = getPixKey();
+  const label = getPixLabel();
+
+  if($("pixLabel")) $("pixLabel").textContent = label || "CHAVE PIX DA LOJA";
+  if($("pixKeyText")) $("pixKeyText").textContent = key || "Chave Pix não cadastrada.";
+}
+
+function setCheckoutPayment(method){
+  const pay = String(method || "Pix");
+
+  if($("pay")) $("pay").value = pay;
+
+  $("payCardPix")?.classList.toggle("active", pay === "Pix");
+  $("payCardCartao")?.classList.toggle("active", pay === "Cartão");
+  $("payCardDinheiro")?.classList.toggle("active", pay === "Dinheiro");
+
+  $("pixInfoBox")?.classList.toggle("checkoutHidden", pay !== "Pix");
+  $("changeForBox")?.classList.toggle("checkoutHidden", pay !== "Dinheiro");
+
+  refreshPixInfo();
+}
+
+function resetCheckoutPaymentUI(){
+  if($("changeFor")) $("changeFor").value = "";
+  setCheckoutPayment("Pix");
+}
+
+
+
+
+
+
+
+
+
+
 async function sendOrder(){
 
 
@@ -1881,6 +2025,18 @@ const now = Date.now();
 if(now - LAST_ORDER_SENT_AT < 8000){
   return alert("Aguarde alguns segundos antes de enviar outro pedido.");
 }
+
+
+const change_for = payment === "Dinheiro"
+  ? String($("changeFor")?.value || "").trim()
+  : "";
+
+const finalNotes = [
+  notes,
+  (payment === "Dinheiro" && change_for) ? `Troco para: ${change_for}` : ""
+].filter(Boolean).join(" | ");
+
+
 
 IS_SENDING_ORDER = true;
 setOrderButtonLoading(true);
@@ -1894,7 +2050,18 @@ try{
       const name = $("cName").value.trim();
       const phone = phoneOnly($("cPhone").value.trim());
       const type = $("type").value;
-      const address = type==="ENTREGA" ? $("addr").value.trim() : "";
+const address = type === "ENTREGA"
+  ? buildCheckoutAddress().trim()
+  : "";
+
+  const change_for = payment === "Dinheiro"
+  ? String($("changeFor")?.value || "").trim()
+  : "";
+  const finalNotes = [
+  notes,
+  (payment === "Dinheiro" && change_for) ? `Troco para: ${change_for}` : ""
+].filter(Boolean).join(" | ");
+if($("addr")) $("addr").value = address;
       const payment = $("pay").value;
       const notes = $("notes").value.trim();
       const need_nfce = $("needNfce").checked;
@@ -1946,6 +2113,8 @@ const payload = {
   customer_phone: phone,
   address: (type === "ENTREGA") ? address : "", // garante vazio se retirada
   payment,
+  notes: finalNotes,
+  change_for,
   location: CUSTOMER_LOCATION ? {
   lat: Number(CUSTOMER_LOCATION.lat),
   lng: Number(CUSTOMER_LOCATION.lng)
@@ -2354,6 +2523,47 @@ $("checkoutBtn").addEventListener("click", ()=>{
 
       $("closeModal").addEventListener("click", closeModal);
       $("cancelModal").addEventListener("click", closeModal);
+
+
+
+      $("payCardPix")?.addEventListener("click", ()=>{
+  setCheckoutPayment("Pix");
+});
+
+$("payCardCartao")?.addEventListener("click", ()=>{
+  setCheckoutPayment("Cartão");
+});
+
+$("payCardDinheiro")?.addEventListener("click", ()=>{
+  setCheckoutPayment("Dinheiro");
+});
+
+$("copyPixBtn")?.addEventListener("click", async ()=>{
+  const key = getPixKey();
+  if(!key){
+    return alert("Chave Pix não cadastrada.");
+  }
+
+  try{
+    await navigator.clipboard.writeText(key);
+    toast("Chave Pix copiada ✅");
+  }catch(e){
+    alert("Não foi possível copiar a chave Pix.");
+  }
+});
+
+
+
+
+
+$("typeCardEntrega")?.addEventListener("click", ()=>{
+  setCheckoutType("ENTREGA");
+});
+
+$("typeCardRetirada")?.addEventListener("click", ()=>{
+  setCheckoutType("RETIRADA");
+});
+
 
 $("type")?.addEventListener("change", async ()=>{
   const type = $("type").value;
