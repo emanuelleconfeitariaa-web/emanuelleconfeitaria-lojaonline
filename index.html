@@ -2000,6 +2000,212 @@ body{
 
 
 
+
+
+
+
+.checkoutReceiveGrid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:12px;
+  margin-top:10px;
+}
+
+.checkoutReceiveCard{
+  border:2px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:18px 16px;
+  background: rgba(255,255,255,.96);
+  cursor:pointer;
+  transition:.18s ease;
+  user-select:none;
+  min-height:110px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.checkoutReceiveCard:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.06);
+}
+
+.checkoutReceiveCard.active{
+  border-color:#19b37a;
+  background: rgba(25,179,122,.08);
+  box-shadow: 0 0 0 4px rgba(25,179,122,.08);
+}
+
+.checkoutReceiveIcon{
+  font-size:28px;
+  line-height:1;
+  margin-bottom:10px;
+}
+
+.checkoutReceiveTitle{
+  font-size:18px;
+  font-weight:1000;
+}
+
+.checkoutSectionBox{
+  margin-top:12px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:14px;
+  background: rgba(255,255,255,.78);
+}
+
+.checkoutPickupBox{
+  margin-top:12px;
+  border:1px solid rgba(25,179,122,.20);
+  background: rgba(25,179,122,.10);
+  border-radius:18px;
+  padding:16px;
+}
+
+.checkoutPickupTitle{
+  font-size:15px;
+  font-weight:1000;
+  color:#0a7b54;
+  margin-bottom:8px;
+}
+
+.checkoutPickupText{
+  color:#17684d;
+  line-height:1.5;
+  font-size:14px;
+}
+
+.checkoutGrid2{
+  display:grid;
+  grid-template-columns: 1fr 110px;
+  gap:10px;
+}
+
+.checkoutGrid3{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+
+.checkoutHidden{
+  display:none !important;
+}
+
+@media(max-width:760px){
+  .checkoutReceiveGrid,
+  .checkoutGrid2,
+  .checkoutGrid3{
+    grid-template-columns:1fr;
+  }
+}
+
+
+
+
+
+.checkoutPayList{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.checkoutPayCard{
+  border:2px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:18px 16px;
+  background: rgba(255,255,255,.96);
+  cursor:pointer;
+  transition:.18s ease;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.checkoutPayCard:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.06);
+}
+
+.checkoutPayCard.active{
+  border-color:#19b37a;
+  background: rgba(25,179,122,.08);
+  box-shadow: 0 0 0 4px rgba(25,179,122,.08);
+}
+
+.checkoutPayIcon{
+  width:46px;
+  height:46px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,.05);
+  font-size:24px;
+  flex:0 0 46px;
+}
+
+.checkoutPayMain{
+  flex:1;
+  min-width:0;
+}
+
+.checkoutPayTitle{
+  font-size:17px;
+  font-weight:1000;
+}
+
+.checkoutPayCheck{
+  font-size:22px;
+  font-weight:1000;
+  color:#19b37a;
+}
+
+.checkoutPixBox{
+  border:1px solid rgba(25,179,122,.20);
+  background: rgba(25,179,122,.10);
+  border-radius:18px;
+  padding:16px;
+}
+
+.checkoutPixLabel{
+  font-size:14px;
+  font-weight:1000;
+  color:#0a7b54;
+  margin-bottom:10px;
+}
+
+.checkoutPixRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  background:#fff;
+  border:1px solid rgba(25,179,122,.20);
+  border-radius:14px;
+  padding:12px 14px;
+}
+
+.checkoutPixKey{
+  font-size:18px;
+  font-weight:1000;
+  color:#17684d;
+  word-break:break-word;
+}
+
+.checkoutPixHint{
+  margin-top:12px;
+  color:#17684d;
+  font-size:14px;
+}
+
+
+
+
   </style>
 </head>
 
@@ -2136,27 +2342,115 @@ body{
           </div>
         </div>
 
-        <div style="margin-top:12px" class="mGrid">
-          <div>
-            <label class="mutedTxt"><b>Retirada ou Entrega</b></label>
-            <select id="type">
-              <option value="RETIRADA">Retirada</option>
-              <option value="ENTREGA">Entrega</option>
-            </select>
-            <div id="shippingMsg" class="hint" style="margin-top:6px;"></div>
-          </div>
-          <div>
-            <label class="mutedTxt"><b>Pagamento</b></label>
-            <select id="pay">
-              <option>Pix</option>
-              <option>Cartão</option>
-              <option>Dinheiro</option>
-              <option>A combinar</option>
-            </select>
-          </div>
-        </div>
+<div style="margin-top:12px">
+  <label class="mutedTxt"><b>Como deseja receber?</b></label>
 
-        
+  <div class="checkoutReceiveGrid">
+    <div class="checkoutReceiveCard active" id="typeCardEntrega" data-type="ENTREGA">
+      <div class="checkoutReceiveIcon">📍</div>
+      <div class="checkoutReceiveTitle">Entrega</div>
+    </div>
+
+    <div class="checkoutReceiveCard" id="typeCardRetirada" data-type="RETIRADA">
+      <div class="checkoutReceiveIcon">🏪</div>
+      <div class="checkoutReceiveTitle">Retirada</div>
+    </div>
+  </div>
+
+  <select id="type" class="checkoutHidden">
+    <option value="ENTREGA" selected>ENTREGA</option>
+    <option value="RETIRADA">RETIRADA</option>
+  </select>
+
+  <div id="shippingMsg" class="hint" style="margin-top:8px;"></div>
+</div>
+<div style="margin-top:12px">
+  <label class="mutedTxt"><b>Pagamento na Entrega</b></label>
+
+  <div class="checkoutPayList">
+    <div class="checkoutPayCard active" id="payCardPix" data-pay="Pix">
+      <div class="checkoutPayIcon">🔳</div>
+      <div class="checkoutPayMain">
+        <div class="checkoutPayTitle">PIX (Aprovação Imediata)</div>
+      </div>
+      <div class="checkoutPayCheck">✔</div>
+    </div>
+
+    <div id="pixInfoBox" class="checkoutPixBox">
+      <div class="checkoutPixLabel" id="pixLabel">CHAVE PIX DA LOJA</div>
+      <div class="checkoutPixRow">
+        <div class="checkoutPixKey" id="pixKeyText">—</div>
+        <button type="button" class="mBtn" id="copyPixBtn">COPIAR</button>
+      </div>
+      <div class="checkoutPixHint">Envie comprovante via WhatsApp</div>
+    </div>
+
+    <div class="checkoutPayCard" id="payCardCartao" data-pay="Cartão">
+      <div class="checkoutPayIcon">💳</div>
+      <div class="checkoutPayMain">
+        <div class="checkoutPayTitle">Cartão (Débito/Crédito)</div>
+      </div>
+    </div>
+
+    <div class="checkoutPayCard" id="payCardDinheiro" data-pay="Dinheiro">
+      <div class="checkoutPayIcon">💵</div>
+      <div class="checkoutPayMain">
+        <div class="checkoutPayTitle">Dinheiro</div>
+      </div>
+    </div>
+
+    <div id="changeForBox" class="checkoutSectionBox checkoutHidden">
+      <label class="mutedTxt"><b>Troco para quanto?</b></label>
+      <input id="changeFor" placeholder="Ex: 100,00">
+    </div>
+  </div>
+
+  <select id="pay" class="checkoutHidden">
+    <option selected>Pix</option>
+    <option>Cartão</option>
+    <option>Dinheiro</option>
+    <option>A combinar</option>
+  </select>
+</div>
+
+
+<div id="deliveryFields" class="checkoutSectionBox">
+  <label class="mutedTxt"><b>Endereço de entrega</b></label>
+
+  <input id="addrZip" placeholder="CEP (apenas números)">
+
+  <div class="checkoutGrid2" style="margin-top:10px">
+    <input id="addrStreet" placeholder="Rua / Logradouro">
+    <input id="addrNumber" placeholder="Nº">
+  </div>
+
+  <div class="checkoutGrid3" style="margin-top:10px">
+    <input id="addrComplement" placeholder="Complemento">
+    <input id="addrNeighborhood" placeholder="Bairro">
+  </div>
+
+  <div class="checkoutGrid2" style="margin-top:10px">
+    <input id="addrCity" placeholder="Cidade">
+    <input id="addrState" placeholder="UF">
+  </div>
+
+  <button type="button" class="mBtn" id="useLocationBtn" style="margin-top:10px;">
+    Usar minha localização exata
+  </button>
+
+  <div id="geoMsg" class="hint" style="margin-top:6px; display:none;"></div>
+</div>
+
+<div id="pickupBox" class="checkoutPickupBox checkoutHidden">
+  <div class="checkoutPickupTitle">Endereço para Retirada</div>
+  <div class="checkoutPickupText" id="pickupAddressText">
+    Retire na loja.
+  </div>
+</div>
+
+<input id="addr" class="checkoutHidden">
+
+
         <div id="scheduleBox" style="display:none;margin-top:12px;padding:12px;border:1px solid rgba(0,0,0,.12);border-radius:16px;background:#fff;">
           <div class="mutedTxt" style="font-weight:1000">A loja está fechada agora. Você pode <b>agendar</b> seu pedido.</div>
           <div class="mGrid" style="margin-top:10px">
@@ -2171,20 +2465,11 @@ body{
           </div>
         </div>
 
-<div style="margin-top:12px" id="addrBox">
-  <label class="mutedTxt"><b>Endereço para entrega</b></label>
-  <input id="addr" placeholder="Rua, número, bairro...">
 
-  <button type="button" class="mBtn" id="useLocationBtn" style="margin-top:8px;">
-    Usar minha localização exata
-  </button>
-
-  <div id="geoMsg" class="hint" style="margin-top:6px; display:none;"></div>
-</div>
 
         <div style="margin-top:12px">
           <label class="mutedTxt"><b>Observações</b></label>
-          <textarea id="notes" placeholder="Ex: sem açúcar, ponto do bolo, etc"></textarea>
+          <textarea id="notes" placeholder="Ex: ponto de referência, troco, observações do pedido..."></textarea>
         </div>
 
         <div style="margin-top:10px">
