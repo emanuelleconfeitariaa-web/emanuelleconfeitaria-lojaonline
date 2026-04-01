@@ -892,7 +892,114 @@
 
 
 
+.coReceiveGrid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:12px;
+  margin-top:8px;
+}
 
+.coReceiveCard{
+  border:2px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:18px 16px;
+  background: rgba(255,255,255,.92);
+  cursor:pointer;
+  transition: .18s ease;
+  user-select:none;
+  min-height: 110px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.coReceiveCard:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0,0,0,.06);
+}
+
+.coReceiveCard.active{
+  border-color:#19b37a;
+  background: rgba(25,179,122,.08);
+  box-shadow: 0 0 0 4px rgba(25,179,122,.08);
+}
+
+.coReceiveIcon{
+  font-size:28px;
+  line-height:1;
+  margin-bottom:10px;
+}
+
+.coReceiveTitle{
+  font-size:18px;
+  font-weight:1000;
+}
+
+.coAddressBox{
+  margin-top:12px;
+  border:1px solid rgba(25,179,122,.20);
+  background: rgba(25,179,122,.10);
+  border-radius:18px;
+  padding:16px;
+}
+
+.coAddressBoxTitle{
+  font-size:15px;
+  font-weight:1000;
+  color:#0a7b54;
+  margin-bottom:8px;
+}
+
+.coAddressBoxText{
+  color:#17684d;
+  line-height:1.5;
+  font-size:14px;
+}
+
+.coAddressFields{
+  margin-top:12px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  padding:14px;
+  background: rgba(255,255,255,.72);
+}
+
+.coFieldGrid{
+  display:grid;
+  grid-template-columns: 1fr 160px;
+  gap:10px;
+}
+
+.coFieldGrid3{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+
+.coFieldGrid4{
+  display:grid;
+  grid-template-columns: 1fr 110px;
+  gap:10px;
+}
+
+.coAddressFields input{
+  margin-top:0;
+}
+
+.coHidden{
+  display:none !important;
+}
+
+@media(max-width: 760px){
+  .coReceiveGrid,
+  .coFieldGrid,
+  .coFieldGrid3,
+  .coFieldGrid4{
+    grid-template-columns:1fr;
+  }
+}
 
 
 
@@ -1848,18 +1955,53 @@
         </div>
       </div>
 
-      <label>Endereço</label>
-      <input id="coAddress" placeholder="Rua..., Nº..., Bairro..."/>
+      <label>Como deseja receber?</label>
+<div class="coReceiveGrid">
+  <div class="coReceiveCard active" id="coCardEntrega" data-service="ENTREGA">
+    <div class="coReceiveIcon">📍</div>
+    <div class="coReceiveTitle">Entrega</div>
+  </div>
 
-      <div class="row" style="margin-top:10px;">
-        <div>
-          <label>Tipo de serviço</label>
-          <select id="coService">
-            <option value="Delivery">Delivery</option>
-            <option value="Retirada">Retirada</option>
-          </select>
-        </div>
-        <div>
+  <div class="coReceiveCard" id="coCardRetirada" data-service="RETIRADA">
+    <div class="coReceiveIcon">🏪</div>
+    <div class="coReceiveTitle">Retirada</div>
+  </div>
+</div>
+
+<select id="coService" class="coHidden">
+  <option value="Delivery" selected>Delivery</option>
+  <option value="Retirada">Retirada</option>
+</select>
+
+<div id="coDeliveryFields" class="coAddressFields">
+  <label style="margin-top:0;">Endereço de Entrega</label>
+
+  <input id="coZip" placeholder="CEP (apenas números)"/>
+
+  <div class="coFieldGrid4" style="margin-top:10px;">
+    <input id="coStreet" placeholder="Rua / Logradouro"/>
+    <input id="coNumber" placeholder="Nº"/>
+  </div>
+
+  <div class="coFieldGrid3" style="margin-top:10px;">
+    <input id="coComplement" placeholder="Complemento"/>
+    <input id="coNeighborhood" placeholder="Bairro"/>
+  </div>
+
+  <div class="coFieldGrid4" style="margin-top:10px;">
+    <input id="coCity" placeholder="Cidade"/>
+    <input id="coState" placeholder="UF"/>
+  </div>
+</div>
+
+<div id="coPickupBox" class="coAddressBox coHidden">
+  <div class="coAddressBoxTitle">Endereço para Retirada</div>
+  <div class="coAddressBoxText" id="coPickupAddressText">
+    Retire na loja.
+  </div>
+</div>
+
+<input id="coAddress" class="coHidden" /> 
           <label>Frete (R$)</label>
           <input id="coShipping" type="number" step="0.01" value="0"/>
         </div>
@@ -1883,8 +2025,8 @@
         </div>
       </div>
 
-      <label>Observações</label>
-      <input id="coNotes" placeholder="Ex: sem açúcar, entregar na portaria..."/>
+ <label>Observações</label>
+<textarea id="coNotes" placeholder="Alguma observação? Ex.: referência, troco, portaria, sem açúcar..."></textarea>
 
  <hr style="border:none;border-top:1px solid rgba(0,0,0,.08); margin:14px 0;">
  <h3 style="margin:0;"></h3>
@@ -3029,6 +3171,102 @@ if(CURRENT_CROP_MODE === "banner-free"){
   toast("Imagem cortada ✅");
 }
 
+
+
+
+
+function getPickupAddressText(){
+  const s = SETTINGS || {};
+
+  const street = String(s.store_pickup_street || s.pickup_street || "").trim();
+  const number = String(s.store_pickup_number || s.pickup_number || "").trim();
+  const neighborhood = String(s.store_pickup_neighborhood || s.pickup_neighborhood || "").trim();
+  const city = String(s.store_pickup_city || s.pickup_city || "").trim();
+  const state = String(s.store_pickup_state || s.pickup_state || "").trim();
+  const zip = String(s.store_pickup_zip || s.pickup_zip || "").trim();
+  const fallback = String(s.address_base || "").trim();
+
+  const line1 = [street, number].filter(Boolean).join(", ");
+  const line2 = [neighborhood, [city, state].filter(Boolean).join(" / ")].filter(Boolean).join(" - ");
+  const line3 = zip ? ("CEP: " + zip) : "";
+
+  return [line1, line2, line3].filter(Boolean).join("<br>") || fallback || "Endereço da loja não informado.";
+}
+
+function setCoService(type){
+  const isDelivery = type === "ENTREGA";
+
+  $("coService").value = isDelivery ? "Delivery" : "Retirada";
+
+  $("coCardEntrega")?.classList.toggle("active", isDelivery);
+  $("coCardRetirada")?.classList.toggle("active", !isDelivery);
+
+  $("coDeliveryFields")?.classList.toggle("coHidden", !isDelivery);
+  $("coPickupBox")?.classList.toggle("coHidden", isDelivery);
+
+  if(!isDelivery){
+    $("coShipping").value = "0";
+  }
+
+  renderCOItems();
+}
+
+function buildManualAddress(){
+  const zip = $("coZip")?.value.trim() || "";
+  const street = $("coStreet")?.value.trim() || "";
+  const number = $("coNumber")?.value.trim() || "";
+  const complement = $("coComplement")?.value.trim() || "";
+  const neighborhood = $("coNeighborhood")?.value.trim() || "";
+  const city = $("coCity")?.value.trim() || "";
+  const state = $("coState")?.value.trim() || "";
+
+  const line1 = [street, number].filter(Boolean).join(", ");
+  const line2 = [complement, neighborhood].filter(Boolean).join(" - ");
+  const line3 = [city, state].filter(Boolean).join(" / ");
+  const line4 = zip ? ("CEP: " + zip) : "";
+
+  return [line1, line2, line3, line4].filter(Boolean).join(" | ");
+}
+
+function fillAddressFieldsFromClient(raw){
+  const txt = formatClientAddress(raw || "");
+  $("coAddress").value = txt || "";
+
+  if(!txt) return;
+
+  const zipMatch = txt.match(/CEP[:\s]*([0-9\-]+)/i);
+  if(zipMatch) $("coZip").value = zipMatch[1].replace(/\D/g, "");
+
+  if(!$("coStreet").value) $("coStreet").value = "";
+  if(!$("coNumber").value) $("coNumber").value = "";
+  if(!$("coComplement").value) $("coComplement").value = "";
+  if(!$("coNeighborhood").value) $("coNeighborhood").value = "";
+  if(!$("coCity").value) $("coCity").value = "";
+  if(!$("coState").value) $("coState").value = "";
+}
+
+function resetCreateOrderAddressUI(){
+  $("coZip").value = "";
+  $("coStreet").value = "";
+  $("coNumber").value = "";
+  $("coComplement").value = "";
+  $("coNeighborhood").value = "";
+  $("coCity").value = "";
+  $("coState").value = "";
+  $("coAddress").value = "";
+  $("coPickupAddressText").innerHTML = getPickupAddressText();
+  setCoService("ENTREGA");
+}
+
+
+
+
+
+
+
+
+
+  
 function bindCropInputById(inputId){
   const el = $(inputId);
   if(!el) return;
@@ -5606,6 +5844,10 @@ $("uiBannerImg")?.addEventListener("change", async ()=>{
 });
   
 $("coShipping")?.addEventListener("input", renderCOItems);
+
+$("coCardEntrega")?.addEventListener("click", ()=> setCoService("ENTREGA"));
+$("coCardRetirada")?.addEventListener("click", ()=> setCoService("RETIRADA"));  
+  
 // logo da loja (upload)
 $("uiLogoImg")?.addEventListener("change", async ()=>{
   const f = $("uiLogoImg").files && $("uiLogoImg").files[0];
@@ -6533,8 +6775,7 @@ $("openCreateOrder").addEventListener("click", async ()=>{
   $("coSearchClient").value = "";
   $("coName").value = "";
   $("coPhone").value = "";
-  $("coAddress").value = "";
-  $("coService").value = "Delivery";
+  resetCreateOrderAddressUI();
   $("coShipping").value = "0";
   $("coNotes").value = "";
   $("coPayMethod").value = "Pix";
@@ -6576,9 +6817,9 @@ $("coSearchClient").addEventListener("change", ()=>{
 
   $("coName").value = c.name || "";
   $("coPhone").value = c.phone || "";
-  $("coAddress").value = formatClientAddress(
-    c.address || c.customer_address || c.endereco || ""
-  );
+
+  const rawAddr = c.address || c.customer_address || c.endereco || "";
+  fillAddressFieldsFromClient(rawAddr);
 });
 
     $("coAddItem").addEventListener("click", ()=>{
@@ -6599,25 +6840,30 @@ $("coSearchClient").addEventListener("change", ()=>{
   $("coShipping").addEventListener("input", ()=>renderCOItems());
 
   $("coCreateBtn").addEventListener("click", async ()=>{
-  const name = $("coName").value.trim();
-  const phone = $("coPhone").value.trim();
-  const address = $("coAddress").value.trim();
+const name = $("coName").value.trim();
+const phone = $("coPhone").value.trim();
 
-  if(!name || !phone){ alert("Informe nome e telefone."); return; }
-  if(!CO_ITEMS.length){ alert("Adicione pelo menos 1 item."); return; }
+if(!name || !phone){ alert("Informe nome e telefone."); return; }
+if(!CO_ITEMS.length){ alert("Adicione pelo menos 1 item."); return; }
 
-  const shipping = Number($("coShipping").value || 0);
-  const payment = $("coPayMethod").value;
-  const payment_status = $("coPayStatus").value;
-  const notes = $("coNotes").value.trim();
+const shipping = Number($("coShipping").value || 0);
+const payment = $("coPayMethod").value;
+const payment_status = $("coPayStatus").value;
+const notes = $("coNotes").value.trim();
 
-  const service_raw = $("coService").value;
-  const type = String(service_raw).toLowerCase().startsWith("d") ? "ENTREGA" : "RETIRADA";
+const service_raw = $("coService").value;
+const type = String(service_raw).toLowerCase().startsWith("d") ? "ENTREGA" : "RETIRADA";
 
-  if(type === "ENTREGA" && !address){
-    alert("Informe o endereço para delivery.");
-    return;
-  }
+const address = (type === "ENTREGA")
+  ? buildManualAddress().trim()
+  : "";
+
+$("coAddress").value = address;
+
+if(type === "ENTREGA" && !address){
+  alert("Informe o endereço para delivery.");
+  return;
+}
 
   const subtotal = CO_ITEMS.reduce((a,b)=> a + (Number(b.price||0) * Number(b.qty||1)), 0);
   const total = subtotal + shipping;
