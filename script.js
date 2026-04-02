@@ -271,16 +271,11 @@ $("type")?.addEventListener("change", async ()=>{
 function updateProdGalleryUI(){
   const gallery = $("prodGallery");
   const dots = $("prodDots");
-  const prev = $("prodPrev");
-  const next = $("prodNext");
 
   if(!gallery) return;
 
   const total = PROD_GALLERY_TOTAL || 0;
   const hasMany = total > 1;
-
-  if(prev) prev.classList.toggle("hidden", !hasMany);
-  if(next) next.classList.toggle("hidden", !hasMany);
 
   if(dots){
     dots.style.display = hasMany ? "flex" : "none";
@@ -307,21 +302,11 @@ function goToProdSlide(index, smooth = true){
 
 function bindProdGalleryControls(){
   const gallery = $("prodGallery");
-  const prev = $("prodPrev");
-  const next = $("prodNext");
   const dots = $("prodDots");
 
   if(!gallery) return;
   if(gallery.dataset.bound === "1") return;
   gallery.dataset.bound = "1";
-
-  prev?.addEventListener("click", ()=>{
-    goToProdSlide(PROD_GALLERY_INDEX - 1);
-  });
-
-  next?.addEventListener("click", ()=>{
-    goToProdSlide(PROD_GALLERY_INDEX + 1);
-  });
 
   gallery.addEventListener("scroll", ()=>{
     if(!gallery.clientWidth) return;
@@ -527,6 +512,15 @@ function addToCart(p, qty, addons, flavor){
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
     }
+
+
+function escapeAttr(v){
+  return String(v||'')
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
 
 function getCategoryIcon(cat){
   const c = String(cat || "").toLowerCase().trim();
@@ -1749,19 +1743,20 @@ function whatsappMessage(order){
   lines.push("");
   lines.push(`*Nome:* ${name}`);
   lines.push(`*Telefone:* ${phone}`);
-  if(service.toLowerCase() === "delivery" || String(order.type||"").toUpperCase()==="ENTREGA"){
-  lines.push(`*Endereço:* ${addr}`);
-
-  if(order.location && order.location.lat && order.location.lng){
-    lines.push(`*Localização:* https://maps.google.com/?q=${order.location.lat},${order.location.lng}`);
-  }
-}
-
 if(service.toLowerCase() === "delivery" || String(order.type||"").toUpperCase()==="ENTREGA"){
-  lines.push(`*Endereço:* ${addr}`);
+  const prettyAddress = order.address_label || addr || "-";
+  lines.push(`*Endereço:* ${prettyAddress}`);
 
-  if(order.shipping === 0){
+  if(order.map_url){
+    lines.push(`*Mapa:* ${order.map_url}`);
+  }else if(order.location && order.location.lat && order.location.lng){
+    lines.push(`*Mapa:* https://www.google.com/maps?q=${order.location.lat},${order.location.lng}`);
+  }
+
+  if(Number(order.shipping || 0) === 0){
     lines.push(`*Frete:* A confirmar no WhatsApp`);
+  }else{
+    lines.push(`*Frete:* ${money(order.shipping || 0)}`);
   }
 }
   if(notes){
@@ -1798,6 +1793,11 @@ function openOrderSuccessBox(order){
   const type = String(order?.type || "RETIRADA");
   const orderId = order?.id || order?._id || order?.number || "—";
 
+  const totalLabel = money(Number(order.total || 0));
+  const paymentLabel = paymentMethodLabel(order);
+  const addressText = String(order.address_label || order.address || "").trim();
+  const mapUrl = String(order.map_url || "").trim();
+
   const typeLabel = type === "ENTREGA"
     ? "Entrega"
     : "Retirada no balcão";
@@ -1805,87 +1805,148 @@ function openOrderSuccessBox(order){
   const box = document.createElement("div");
   box.id = "orderSuccessOverlay";
   box.innerHTML = `
+<div style="
+  position:fixed; inset:0; z-index:99999;
+  background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center;
+  padding:18px;
+">
+  <div style="
+    width:min(92vw, 560px);
+    background:#fff;
+    border-radius:24px;
+    padding:26px 22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.20);
+    text-align:center;
+    font-family:inherit;
+  ">
+    <div style="font-size:22px;font-weight:900;color:#1f1f1f;margin-bottom:6px;">
+      Olá, ${escapeHtml(name)} 👋
+    </div>
+
+    <div style="font-size:15px;color:#444;margin-bottom:22px;">
+      Pedido #${escapeHtml(String(orderId))} • ${escapeHtml(typeLabel)}
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:0; margin: 10px 0 18px;">
+      <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
+        <div style="
+          width:64px;height:64px;border-radius:999px;
+          background:#16c05a;color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;font-weight:900;
+          box-shadow:0 8px 20px rgba(22,192,90,.25);
+        ">✓</div>
+        <div style="margin-top:10px;font-weight:800;color:#16a34a;">Recebido</div>
+      </div>
+
+      <div style="height:4px; width:72px; background:#16c05a; border-radius:999px;"></div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
+        <div style="
+          width:64px;height:64px;border-radius:999px;
+          background:#16c05a;color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;font-weight:900;
+          box-shadow:0 8px 20px rgba(22,192,90,.25);
+        ">👩‍🍳</div>
+        <div style="margin-top:10px;font-weight:800;color:#16a34a;">Em preparo</div>
+      </div>
+
+      <div style="height:4px; width:72px; background:#e7e7e7; border-radius:999px;"></div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
+        <div style="
+          width:64px;height:64px;border-radius:999px;
+          background:#f3f3f3;color:#777;
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;font-weight:900;
+        ">📦</div>
+        <div style="margin-top:10px;font-weight:800;color:#666;">
+          ${type === "ENTREGA" ? "Saiu p/ entrega" : "Pronto p/ retirada"}
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:14px;color:#555;line-height:1.5;margin-bottom:18px;">
+      Seu pedido foi enviado com sucesso.<br>
+      Você também será avisado no WhatsApp sobre as próximas atualizações.
+    </div>
+
     <div style="
-      position:fixed; inset:0; z-index:99999;
-      background:rgba(0,0,0,.45);
-      display:flex; align-items:center; justify-content:center;
-      padding:18px;
+      margin:18px 0 16px;
+      text-align:left;
+      background:#faf7f5;
+      border:1px solid rgba(139,90,74,.12);
+      border-radius:18px;
+      padding:16px;
     ">
-      <div style="
-        width:min(92vw, 560px);
-        background:#fff;
-        border-radius:24px;
-        padding:26px 22px;
-        box-shadow:0 20px 60px rgba(0,0,0,.20);
-        text-align:center;
-        font-family:inherit;
-      ">
-        <div style="font-size:22px;font-weight:900;color:#1f1f1f;margin-bottom:6px;">
-          Olá, ${escapeHtml(name)} 👋
-        </div>
+      <div style="font-size:14px;color:#666;margin-bottom:8px;">Resumo do pedido</div>
 
-        <div style="font-size:15px;color:#444;margin-bottom:22px;">
-          Pedido #${escapeHtml(String(orderId))} • ${escapeHtml(typeLabel)}
-        </div>
+      <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;">
+        <span style="color:#555;">Total</span>
+        <b style="color:#1f1f1f;">${escapeHtml(totalLabel)}</b>
+      </div>
 
-        <div style="display:flex;align-items:center;justify-content:center;gap:0; margin: 10px 0 18px;">
-          <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
-            <div style="
-              width:64px;height:64px;border-radius:999px;
-              background:#16c05a;color:#fff;
-              display:flex;align-items:center;justify-content:center;
-              font-size:28px;font-weight:900;
-              box-shadow:0 8px 20px rgba(22,192,90,.25);
-            ">✓</div>
-            <div style="margin-top:10px;font-weight:800;color:#16a34a;">Recebido</div>
-          </div>
+      <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;">
+        <span style="color:#555;">Pagamento</span>
+        <b style="color:#1f1f1f;">${escapeHtml(paymentLabel)}</b>
+      </div>
 
-          <div style="height:4px; width:72px; background:#16c05a; border-radius:999px;"></div>
-
-          <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
-            <div style="
-              width:64px;height:64px;border-radius:999px;
-              background:#16c05a;color:#fff;
-              display:flex;align-items:center;justify-content:center;
-              font-size:28px;font-weight:900;
-              box-shadow:0 8px 20px rgba(22,192,90,.25);
-            ">👩‍🍳</div>
-            <div style="margin-top:10px;font-weight:800;color:#16a34a;">Em preparo</div>
-          </div>
-
-          <div style="height:4px; width:72px; background:#e7e7e7; border-radius:999px;"></div>
-
-          <div style="display:flex;flex-direction:column;align-items:center;min-width:110px;">
-            <div style="
-              width:64px;height:64px;border-radius:999px;
-              background:#f3f3f3;color:#777;
-              display:flex;align-items:center;justify-content:center;
-              font-size:28px;font-weight:900;
-            ">📦</div>
-            <div style="margin-top:10px;font-weight:800;color:#666;">
-              ${type === "ENTREGA" ? "Saiu p/ entrega" : "Pronto p/ retirada"}
+      ${
+        type === "ENTREGA"
+          ? `
+          <div style="margin-top:10px;">
+            <div style="color:#555;margin-bottom:4px;">Endereço</div>
+            <div style="font-weight:700;color:#1f1f1f;line-height:1.45;">
+              ${escapeHtml(addressText || "Endereço informado no pedido")}
             </div>
           </div>
-        </div>
+          `
+          : `
+          <div style="margin-top:10px;">
+            <div style="color:#555;margin-bottom:4px;">Retirada</div>
+            <div style="font-weight:700;color:#1f1f1f;line-height:1.45;">
+              Na loja
+            </div>
+          </div>
+          `
+      }
+    </div>
 
-        <div style="font-size:14px;color:#555;line-height:1.5;margin-bottom:18px;">
-          Seu pedido foi enviado com sucesso.<br>
-          Você também será avisado no WhatsApp sobre as próximas atualizações.
-        </div>
-
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button id="orderSuccessCloseBtn" style="
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      ${
+        mapUrl && type === "ENTREGA"
+          ? `
+          <a href="${escapeAttr(mapUrl)}" target="_blank" rel="noopener" style="
+            text-decoration:none;
             border:none;
-            background:#8b5a4a;
+            background:#19b37a;
             color:#fff;
             font-weight:800;
             border-radius:999px;
             padding:12px 22px;
             cursor:pointer;
-          ">Fechar</button>
-        </div>
-      </div>
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+          ">Ver no mapa</a>
+          `
+          : ""
+      }
+
+      <button id="orderSuccessCloseBtn" style="
+        border:none;
+        background:#8b5a4a;
+        color:#fff;
+        font-weight:800;
+        border-radius:999px;
+        padding:12px 22px;
+        cursor:pointer;
+      ">Fechar</button>
     </div>
+  </div>
+</div>
   `;
 
   document.body.appendChild(box);
@@ -2036,6 +2097,36 @@ function buildCheckoutAddress(){
   return [line1, line2, line3, line4].filter(Boolean).join(" | ");
 }
 
+
+function buildCheckoutAddressObject(){
+  return {
+    zip: $("addrZip")?.value.trim() || "",
+    street: $("addrStreet")?.value.trim() || "",
+    number: $("addrNumber")?.value.trim() || "",
+    complement: $("addrComplement")?.value.trim() || "",
+    neighborhood: $("addrNeighborhood")?.value.trim() || "",
+    city: $("addrCity")?.value.trim() || "",
+    state: $("addrState")?.value.trim() || ""
+  };
+}
+
+function buildGoogleMapsSearchUrl(address){
+  const q = String(address || "").trim();
+  if(!q) return "";
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+}
+
+function buildGoogleMapsCoordsUrl(lat, lng){
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if(!isFinite(nLat) || !isFinite(nLng)) return "";
+  return `https://www.google.com/maps?q=${nLat},${nLng}`;
+}
+
+
+
+
+
 function resetCheckoutAddressUI(){
   if($("addrZip")) $("addrZip").value = "";
   if($("addrStreet")) $("addrStreet").value = "";
@@ -2130,9 +2221,29 @@ async function sendOrder(){
     const name = $("cName").value.trim();
     const phone = phoneOnly($("cPhone").value.trim());
     const type = $("type").value;
-    const address = type === "ENTREGA"
-      ? buildCheckoutAddress().trim()
-      : "";
+const deliveryAddress = type === "ENTREGA"
+  ? buildCheckoutAddressObject()
+  : {
+      zip: "",
+      street: "",
+      number: "",
+      complement: "",
+      neighborhood: "",
+      city: "",
+      state: ""
+    };
+
+const address = type === "ENTREGA"
+  ? buildCheckoutAddress().trim()
+  : "";
+
+const mapUrl = type === "ENTREGA"
+  ? (
+      CUSTOMER_GEO && isFinite(Number(CUSTOMER_GEO.lat)) && isFinite(Number(CUSTOMER_GEO.lon))
+        ? buildGoogleMapsCoordsUrl(CUSTOMER_GEO.lat, CUSTOMER_GEO.lon)
+        : buildGoogleMapsSearchUrl(address)
+    )
+  : "";
 
     if($("addr")) $("addr").value = address;
 
@@ -2177,29 +2288,40 @@ async function sendOrder(){
     const shipping = (type === "ENTREGA") ? Number(DYNAMIC_SHIPPING || 0) : 0;
     const total = subtotal + shipping;
 
-    const payload = {
-      customer_name: name,
-      customer_phone: phone,
-      type,
-      address,
-      payment,
-      notes: finalNotes,
-      change_for,
-      need_nfce,
-      cpf: need_nfce ? cpf : "",
-      scheduled_for,
-      items: CART.map(it => ({
-        product_id: it.product_id,
-        name: it.name,
-        price: Number(it.price || 0),
-        qty: Number(it.qty || 0),
-        addons: Array.isArray(it.addons) ? it.addons : [],
-        flavor: String(it.flavor || "")
-      })),
-      subtotal,
-      shipping,
-      total
-    };
+const payload = {
+  customer_name: name,
+  customer_phone: phone,
+  type,
+  address,
+  delivery_address: deliveryAddress,
+  map_url: mapUrl,
+  payment,
+  notes: finalNotes,
+  change_for,
+  need_nfce,
+  cpf: need_nfce ? cpf : "",
+  scheduled_for,
+  location: (
+    type === "ENTREGA" &&
+    CUSTOMER_GEO &&
+    isFinite(Number(CUSTOMER_GEO.lat)) &&
+    isFinite(Number(CUSTOMER_GEO.lon))
+  ) ? {
+    lat: Number(CUSTOMER_GEO.lat),
+    lng: Number(CUSTOMER_GEO.lon)
+  } : null,
+  items: CART.map(it => ({
+    product_id: it.product_id,
+    name: it.name,
+    price: Number(it.price || 0),
+    qty: Number(it.qty || 0),
+    addons: Array.isArray(it.addons) ? it.addons : [],
+    flavor: String(it.flavor || "")
+  })),
+  subtotal,
+  shipping,
+  total
+};
 
 const controller = new AbortController();
 const timeout = setTimeout(() => controller.abort(), 20000);
