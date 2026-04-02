@@ -2002,6 +2002,71 @@ body{
 
 
 
+
+.prodNav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:999px;
+  background: rgba(255,255,255,.88);
+  color:#2b1b17;
+  font-size:28px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  z-index:3;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+.prodNav.prev{ left:10px; }
+.prodNav.next{ right:10px; }
+
+.prodNav.hidden{
+  display:none !important;
+}
+
+.prodDots{
+  position:absolute;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  z-index:3;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.72);
+  box-shadow: 0 6px 16px rgba(0,0,0,.10);
+}
+
+.prodDot{
+  width:9px;
+  height:9px;
+  border-radius:999px;
+  background: rgba(0,0,0,.22);
+  transition:.18s ease;
+}
+
+.prodDot.active{
+  background: var(--primary);
+  transform: scale(1.12);
+}
+
+
+
+
+
+
+
+
+
+
 .checkoutReceiveGrid{
   display:grid;
   grid-template-columns: repeat(2, minmax(0,1fr));
@@ -2203,60 +2268,6 @@ body{
 
 
 
-.prodNav{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  width:38px;
-  height:38px;
-  border:none;
-  border-radius:999px;
-  background: rgba(255,255,255,.88);
-  color:#2b1b17;
-  font-size:28px;
-  line-height:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  z-index:3;
-  box-shadow: 0 8px 20px rgba(0,0,0,.12);
-}
-
-.prodNav.prev{ left:10px; }
-.prodNav.next{ right:10px; }
-
-.prodNav.hidden{
-  display:none !important;
-}
-
-.prodDots{
-  position:absolute;
-  left:50%;
-  bottom:10px;
-  transform:translateX(-50%);
-  display:flex;
-  align-items:center;
-  gap:8px;
-  z-index:3;
-  padding:6px 10px;
-  border-radius:999px;
-  background: rgba(255,255,255,.72);
-  box-shadow: 0 6px 16px rgba(0,0,0,.10);
-}
-
-.prodDot{
-  width:9px;
-  height:9px;
-  border-radius:999px;
-  background: rgba(0,0,0,.22);
-  transition:.18s ease;
-}
-
-.prodDot.active{
-  background: var(--primary);
-  transform: scale(1.12);
-}
 
 
 
