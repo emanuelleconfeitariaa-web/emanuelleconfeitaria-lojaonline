@@ -349,7 +349,6 @@ function bindProdGalleryControls(){
 }
 
 
-
 function openProdModal(p){
   MODAL_PRODUCT = p;
   MODAL_QTY = 1;
@@ -976,7 +975,7 @@ function applyReviewsLink(){
 
 
 async function loadProducts(){
-  const res = await fetch(API + "/api/products");
+  const res = await fetch(API + "/api/products?full=1");
   const arr = await res.json();
 
   const map = new Map();
@@ -2202,11 +2201,20 @@ async function sendOrder(){
       total
     };
 
-    const res = await fetch(API + "/api/orders", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
+const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 20000);
+
+let res;
+try{
+  res = await fetch(API + "/api/orders", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload),
+    signal: controller.signal
+  });
+} finally {
+  clearTimeout(timeout);
+}
 
     const data = await res.json().catch(()=> ({}));
     if(!res.ok || data?.ok === false){
@@ -2219,13 +2227,17 @@ async function sendOrder(){
     closeModal();
     closeDrawer();
    openOrderSuccessBox(data.order || data);
-  }catch(err){
+}catch(err){
+  if(err?.name === "AbortError"){
+    alert("O envio do pedido demorou demais para responder. Tente novamente em alguns segundos.");
+  }else{
     alert(err?.message || "Erro ao enviar pedido.");
-  }finally{
-    IS_SENDING_ORDER = false;
-    setOrderButtonLoading(false);
-    closeOrderSendingBox();
   }
+}finally{
+  IS_SENDING_ORDER = false;
+  setOrderButtonLoading(false);
+  closeOrderSendingBox();
+ }
 }
 
     
@@ -2499,55 +2511,69 @@ document.getElementById("hoursModal")?.addEventListener("click", (e)=>{
 
 
 document.addEventListener("DOMContentLoaded", async ()=>{
-  await Promise.all([
-    loadSettings(),
-    loadProducts(),
-    loadCategories()
-  ]);
+  try{
+    const results = await Promise.allSettled([
+      loadSettings(),
+      loadProducts(),
+      loadCategories()
+    ]);
 
-  applyReviewsLink();
-  buildCategories();
-  render();
-  renderCart();
+    const failed = results.filter(r => r.status === "rejected");
+    if(failed.length){
+      console.warn("Falhas ao iniciar a loja:", failed);
+    }
 
-     $("q")?.addEventListener("input", ()=>{
-        SEARCH = $("q").value.trim();
-        render();
+    if(!SETTINGS) SETTINGS = {};
+    if(!Array.isArray(PRODUCTS)) PRODUCTS = [];
+    if(!(FEATURED_CATS instanceof Set)) FEATURED_CATS = new Set();
+
+    applyReviewsLink();
+    buildCategories();
+    render();
+    renderCart();
+
+    $("q")?.addEventListener("input", ()=>{
+      SEARCH = $("q").value.trim();
+      render();
+    });
+
+    $("scrollTopBtn")?.addEventListener("click", ()=>{
+      window.scrollTo({ top: 0, behavior:"smooth" });
+    });
+
+    const cartBtn = document.getElementById("cartBarBtn");
+    if(cartBtn){
+      cartBtn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        openDrawer();
       });
-
-      $("scrollTopBtn")?.addEventListener("click", ()=>{
-        window.scrollTo({ top: 0, behavior:"smooth" });
-      });
-// botão da barra "Veja meu pedido"
-const cartBtn = document.getElementById("cartBarBtn");
-if(cartBtn){
-  cartBtn.addEventListener("click", (e)=>{
-    e.preventDefault();
-    openDrawer(); // usa sua função
-  });
-}
+    }
 
     if (IS_PDV) {
-    const btn = document.getElementById("checkoutBtn");
-    if (btn) {
-      btn.textContent = "Voltar ao PDV";
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
+      const btn = document.getElementById("checkoutBtn");
+      if (btn) {
+        btn.textContent = "Voltar ao PDV";
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
 
-        if (!CART.length) {
-          alert("Carrinho vazio.");
-          return;
-        }
+          if (!CART.length) {
+            alert("Carrinho vazio.");
+            return;
+          }
 
-      sendCartToPDV();
-    }, true); // capture=true
+          sendCartToPDV();
+        }, true);
+      }
+    }
+
+    document.getElementById("closeDrawer")?.addEventListener("click", closeDrawer);
+  }catch(err){
+    console.error("Erro ao iniciar loja:", err);
+    alert("Não foi possível carregar a loja corretamente. Atualize a página em alguns segundos.");
   }
-}
-
-document.getElementById("closeDrawer")?.addEventListener("click", closeDrawer);
-});    
+}); 
 
 
 
