@@ -2979,7 +2979,7 @@ function flyToCart(fromEl, toEl){
     // anima com transition
     const dx = endX - startX;
     const dy = endY - startY;
-
+ 
     requestAnimationFrame(()=>{
       clone.style.transition =
         "transform 520ms cubic-bezier(.22,1,.36,1), opacity 520ms cubic-bezier(.22,1,.36,1)";
