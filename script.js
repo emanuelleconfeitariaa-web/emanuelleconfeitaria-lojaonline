@@ -115,7 +115,9 @@ let MODAL_PRODUCT = null;
 let MODAL_QTY = 1;
 let MODAL_ADDONS = [];  
 let MODAL_FLAVOR = "";    
-let __modalBasePrice = 0;   
+let __modalBasePrice = 0;
+let PROD_GALLERY_INDEX = 0;
+let PROD_GALLERY_TOTAL = 0;
 
 function sendCartToPDV(){
   const subtotal = CART.reduce((acc,it)=> acc + (Number(it.price||0) * Number(it.qty||0)), 0);
@@ -266,7 +268,85 @@ $("type")?.addEventListener("change", async ()=>{
 }
 
 
+function updateProdGalleryUI(){
+  const gallery = $("prodGallery");
+  const dots = $("prodDots");
+  const prev = $("prodPrev");
+  const next = $("prodNext");
 
+  if(!gallery) return;
+
+  const total = PROD_GALLERY_TOTAL || 0;
+  const hasMany = total > 1;
+
+  if(prev) prev.classList.toggle("hidden", !hasMany);
+  if(next) next.classList.toggle("hidden", !hasMany);
+
+  if(dots){
+    dots.style.display = hasMany ? "flex" : "none";
+    dots.innerHTML = Array.from({ length: total }).map((_, i)=>`
+      <span class="prodDot ${i === PROD_GALLERY_INDEX ? "active" : ""}"></span>
+    `).join("");
+  }
+}
+
+function goToProdSlide(index, smooth = true){
+  const gallery = $("prodGallery");
+  if(!gallery || !PROD_GALLERY_TOTAL) return;
+
+  const max = PROD_GALLERY_TOTAL - 1;
+  PROD_GALLERY_INDEX = Math.max(0, Math.min(index, max));
+
+  gallery.scrollTo({
+    left: gallery.clientWidth * PROD_GALLERY_INDEX,
+    behavior: smooth ? "smooth" : "auto"
+  });
+
+  updateProdGalleryUI();
+}
+
+function bindProdGalleryControls(){
+  const gallery = $("prodGallery");
+  const prev = $("prodPrev");
+  const next = $("prodNext");
+  const dots = $("prodDots");
+
+  if(!gallery) return;
+  if(gallery.dataset.bound === "1") return;
+  gallery.dataset.bound = "1";
+
+  prev?.addEventListener("click", ()=>{
+    goToProdSlide(PROD_GALLERY_INDEX - 1);
+  });
+
+  next?.addEventListener("click", ()=>{
+    goToProdSlide(PROD_GALLERY_INDEX + 1);
+  });
+
+  gallery.addEventListener("scroll", ()=>{
+    if(!gallery.clientWidth) return;
+    const idx = Math.round(gallery.scrollLeft / gallery.clientWidth);
+    if(idx !== PROD_GALLERY_INDEX){
+      PROD_GALLERY_INDEX = idx;
+      updateProdGalleryUI();
+    }
+  }, { passive:true });
+
+  dots?.addEventListener("click", (e)=>{
+    const dot = e.target.closest(".prodDot");
+    if(!dot) return;
+
+    const all = Array.from(dots.querySelectorAll(".prodDot"));
+    const idx = all.indexOf(dot);
+    if(idx >= 0){
+      goToProdSlide(idx);
+    }
+  });
+
+  window.addEventListener("resize", ()=>{
+    goToProdSlide(PROD_GALLERY_INDEX, false);
+  });
+}
 
 
 
@@ -320,6 +400,10 @@ function openProdModal(p){
 const imgs = getProductImages(p);
 const gallery = $("prodGallery");
 const noImg = $("prodNoImg");
+const dots = $("prodDots");
+
+PROD_GALLERY_INDEX = 0;
+PROD_GALLERY_TOTAL = imgs.length;
 
 if(gallery){
   if(imgs.length){
@@ -328,12 +412,23 @@ if(gallery){
         <img src="${src}" alt="${escapeAttr((p.name || "Produto") + " " + (i + 1))}">
       </div>
     `).join("");
+
+    gallery.scrollLeft = 0;
     gallery.style.display = "flex";
     if(noImg) noImg.style.display = "none";
+
+    bindProdGalleryControls();
+    updateProdGalleryUI();
+
+    if(dots) dots.style.display = imgs.length > 1 ? "flex" : "none";
   }else{
     gallery.innerHTML = "";
     gallery.style.display = "none";
     if(noImg) noImg.style.display = "block";
+    if(dots) dots.style.display = "none";
+    PROD_GALLERY_TOTAL = 0;
+    PROD_GALLERY_INDEX = 0;
+    updateProdGalleryUI();
   }
 }
 
@@ -355,6 +450,8 @@ function closeProdModal(){
   MODAL_PRODUCT = null;
   MODAL_ADDONS = [];
   __modalBasePrice = 0;
+  PROD_GALLERY_INDEX = 0;
+  PROD_GALLERY_TOTAL = 0;
 }
 
 
@@ -2015,172 +2112,120 @@ function resetCheckoutPaymentUI(){
 
 
 async function sendOrder(){
+  if(IS_SENDING_ORDER){
+    return;
+  }
 
+  const now = Date.now();
+  if(now - LAST_ORDER_SENT_AT < 8000){
+    return alert("Aguarde alguns segundos antes de enviar outro pedido.");
+  }
 
-if(IS_SENDING_ORDER){
-  return;
-}
+  IS_SENDING_ORDER = true;
+  setOrderButtonLoading(true);
+  openOrderSendingBox();
 
-const now = Date.now();
-if(now - LAST_ORDER_SENT_AT < 8000){
-  return alert("Aguarde alguns segundos antes de enviar outro pedido.");
-}
+  try{
+    if(!CART.length) return alert("Carrinho vazio.");
 
+    const name = $("cName").value.trim();
+    const phone = phoneOnly($("cPhone").value.trim());
+    const type = $("type").value;
+    const address = type === "ENTREGA"
+      ? buildCheckoutAddress().trim()
+      : "";
 
-const change_for = payment === "Dinheiro"
-  ? String($("changeFor")?.value || "").trim()
-  : "";
+    if($("addr")) $("addr").value = address;
 
-const finalNotes = [
-  notes,
-  (payment === "Dinheiro" && change_for) ? `Troco para: ${change_for}` : ""
-].filter(Boolean).join(" | ");
+    const payment = $("pay").value;
+    const notes = $("notes").value.trim();
+    const need_nfce = $("needNfce").checked;
+    const cpf = $("cpf").value.trim();
 
+    const change_for = payment === "Dinheiro"
+      ? String($("changeFor")?.value || "").trim()
+      : "";
 
+    const finalNotes = [
+      notes,
+      (payment === "Dinheiro" && change_for) ? `Troco para: ${change_for}` : ""
+    ].filter(Boolean).join(" | ");
 
-IS_SENDING_ORDER = true;
-setOrderButtonLoading(true);
-openOrderSendingBox();
+    const openNow = isOpenNow();
+    const bh = SETTINGS?.business_hours;
+    const allowSchedule = !!(bh && bh.allow_schedule !== false);
 
-try{
-
-
-      if(!CART.length) return alert("Carrinho vazio.");
-
-      const name = $("cName").value.trim();
-      const phone = phoneOnly($("cPhone").value.trim());
-      const type = $("type").value;
-const address = type === "ENTREGA"
-  ? buildCheckoutAddress().trim()
-  : "";
-
-  const change_for = payment === "Dinheiro"
-  ? String($("changeFor")?.value || "").trim()
-  : "";
-  const finalNotes = [
-  notes,
-  (payment === "Dinheiro" && change_for) ? `Troco para: ${change_for}` : ""
-].filter(Boolean).join(" | ");
-if($("addr")) $("addr").value = address;
-      const payment = $("pay").value;
-      const notes = $("notes").value.trim();
-      const need_nfce = $("needNfce").checked;
-      const cpf = $("cpf").value.trim();
-
-      const openNow = isOpenNow();
-      const bh = SETTINGS?.business_hours;
-      const allowSchedule = !!(bh && bh.allow_schedule !== false);
-
-      // Se a loja estiver fechada e controle de horário estiver ativo:
-      // - se permitir agendamento, exige data/hora
-      // - se não permitir, bloqueia finalizar pedido
-      let scheduled_for = null;
-      const schedVisible = $("scheduleBox") && $("scheduleBox").style.display !== "none";
-      if(bh?.enabled && !openNow.ok){
-        if(!allowSchedule){
-          return alert("A loja está fechada no momento. Volte no horário de atendimento.");
-        }
-        if(schedVisible){
-          const d = $("schDate").value;
-          const t = $("schTime").value;
-          if(!d || !t) return alert("Escolha data e hora para agendar o pedido.");
-          scheduled_for = `${d} ${t}`;
-        }
+    let scheduled_for = null;
+    const schedVisible = $("scheduleBox") && $("scheduleBox").style.display !== "none";
+    if(bh?.enabled && !openNow.ok){
+      if(!allowSchedule){
+        return alert("A loja está fechada no momento. Volte no horário de atendimento.");
       }
-
-if(type==="ENTREGA" && !address){
-  return alert("Informe o endereço.");
-}
-      if(!name) return alert("Informe seu nome.");
-      if(!phone) return alert("Informe seu WhatsApp.");
-      if(type==="ENTREGA" && !address) return alert("Informe o endereço.");
-      if(need_nfce && !cpf) return alert("Informe o CPF para NFC-e.");
-
-const items = CART.map(it=>({
-  product_id: it.product_id,
-  name: it.name,
-  price: Number(it.price||0),
-  qty: Number(it.qty||0),
-  flavor: String(it.flavor || ""),
-  addons: Array.isArray(it.addons) ? it.addons : []
-}));
-
-      const t = cartTotals();
-
-const payload = {
-  type, // "ENTREGA" ou "RETIRADA"
-  customer_name: name,
-  customer_phone: phone,
-  address: (type === "ENTREGA") ? address : "", // garante vazio se retirada
-  payment,
-  notes: finalNotes,
-  change_for,
-  location: CUSTOMER_LOCATION ? {
-  lat: Number(CUSTOMER_LOCATION.lat),
-  lng: Number(CUSTOMER_LOCATION.lng)
-} : null,
-  notes,
-  need_nfce,
-  cpf,
-  scheduled_for,
-subtotal: Number(t.subtotal || 0),
-shipping: Number(t.shipping || 0),
-total: Number(t.total || 0),
-  customer_location: CUSTOMER_GEO ? {
-  lat: Number(CUSTOMER_GEO.lat),
-  lon: Number(CUSTOMER_GEO.lon)
-} : null,
-  items
-};
-
-const res = await fetch(API + "/api/orders", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload)
-});
-
-      const data = await res.json().catch(()=>null);
-      if(!res.ok){
-        alert((data && data.error) ? data.error : "Erro ao salvar pedido.");
-        return;
+      if(schedVisible){
+        const d = $("schDate").value;
+        const t = $("schTime").value;
+        if(!d || !t) return alert("Escolha data e hora para agendar o pedido.");
+        scheduled_for = `${d} ${t}`;
       }
+    }
 
-      
-const preview = buildPreviewLink(data.order);
-const bodyMsg = whatsappMessage(data.order);
+    if(!name) return alert("Informe seu nome.");
+    if(!phone || phone.length < 10) return alert("Informe um WhatsApp válido.");
+    if(type === "ENTREGA" && !address) return alert("Informe o endereço para entrega.");
+    if(need_nfce && cpf && !/^\d{11}$/.test(cpf)) return alert("CPF inválido.");
 
-// importante: o link precisa ficar sozinho no topo
-const msg = preview
-  ? `${preview}\n\n${bodyMsg}`
-  : bodyMsg;
+    const subtotal = CART.reduce((a,b)=> a + Number(b.price||0) * Number(b.qty||0), 0);
+    const shipping = (type === "ENTREGA") ? Number(DYNAMIC_SHIPPING || 0) : 0;
+    const total = subtotal + shipping;
 
-const to = phoneOnly(SETTINGS.whatsapp_number || "");
-const url = to
-  ? `https://wa.me/${to}?text=${encodeURIComponent(msg)}`
-  : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    const payload = {
+      customer_name: name,
+      customer_phone: phone,
+      type,
+      address,
+      payment,
+      notes: finalNotes,
+      change_for,
+      need_nfce,
+      cpf: need_nfce ? cpf : "",
+      scheduled_for,
+      items: CART.map(it => ({
+        product_id: it.product_id,
+        name: it.name,
+        price: Number(it.price || 0),
+        qty: Number(it.qty || 0),
+        addons: Array.isArray(it.addons) ? it.addons : [],
+        flavor: String(it.flavor || "")
+      })),
+      subtotal,
+      shipping,
+      total
+    };
 
-closeOrderSendingBox();
+    const res = await fetch(API + "/api/orders", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
 
-LAST_ORDER_SENT_AT = Date.now();
+    const data = await res.json().catch(()=> ({}));
+    if(!res.ok || data?.ok === false){
+      throw new Error(data?.error || "Erro ao enviar pedido.");
+    }
 
-CART = [];
-renderCart();
-closeModal();
-closeDrawer();
-openOrderSuccessBox(data.order || data);
-toast("Pedido enviado ✅");
-
-// mostra a confirmação primeiro, depois manda pro WhatsApp
-setTimeout(() => {
-  window.location.href = url;
-    }, 1000);
-
-
-  } finally {
-  IS_SENDING_ORDER = false;
-  setOrderButtonLoading(false);
-  closeOrderSendingBox();
-}
+    LAST_ORDER_SENT_AT = Date.now();
+    CART = [];
+    renderCart();
+    closeModal();
+    closeDrawer();
+   openOrderSuccessBox(data.order || data);
+  }catch(err){
+    alert(err?.message || "Erro ao enviar pedido.");
+  }finally{
+    IS_SENDING_ORDER = false;
+    setOrderButtonLoading(false);
+    closeOrderSendingBox();
+  }
 }
 
     
@@ -2568,15 +2613,14 @@ $("typeCardRetirada")?.addEventListener("click", ()=>{
 $("type")?.addEventListener("change", async ()=>{
   const type = $("type").value;
 
-  const addrBox = $("addrBox");
-  if(addrBox) addrBox.style.display = (type === "ENTREGA") ? "block" : "none";
-
   clearTimeout(SHIPPING_QUOTE_TIMER);
 
   if(type === "ENTREGA"){
+    setCheckoutType("ENTREGA");
     DYNAMIC_SHIPPING = null;
     await quoteShippingByAddress();
   } else {
+    setCheckoutType("RETIRADA");
     DYNAMIC_SHIPPING = 0;
     const msg = $("shippingMsg");
     if(msg){
@@ -2587,29 +2631,28 @@ $("type")?.addEventListener("change", async ()=>{
   }
 });
 
+["addrZip","addrStreet","addrNumber","addrComplement","addrNeighborhood","addrCity","addrState"].forEach(id=>{
+  $(id)?.addEventListener("input", ()=>{
+    CUSTOMER_GEO = null;
 
+    const geoMsg = $("geoMsg");
+    if(geoMsg){
+      geoMsg.style.display = "none";
+      geoMsg.textContent = "";
+    }
 
-$("addr")?.addEventListener("input", ()=>{
-  CUSTOMER_GEO = null;
+    if(String($("type")?.value || "") === "ENTREGA"){
+      scheduleShippingQuote(900);
+    }
+  });
 
-  const geoMsg = $("geoMsg");
-  if(geoMsg){
-    geoMsg.style.display = "none";
-    geoMsg.textContent = "";
-  }
-
-  if(String($("type")?.value || "") === "ENTREGA"){
-    scheduleShippingQuote(900);
-  }
+  $(id)?.addEventListener("blur", async ()=>{
+    clearTimeout(SHIPPING_QUOTE_TIMER);
+    if(String($("type")?.value || "") === "ENTREGA"){
+      await quoteShippingByAddress();
+    }
+  });
 });
-
-$("addr")?.addEventListener("blur", async ()=>{
-  clearTimeout(SHIPPING_QUOTE_TIMER);
-  if(String($("type")?.value || "") === "ENTREGA"){
-    await quoteShippingByAddress();
-  }
-});
-
 
 
       $("needNfce").addEventListener("change", ()=>{
