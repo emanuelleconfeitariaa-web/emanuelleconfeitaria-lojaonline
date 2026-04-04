@@ -2214,6 +2214,60 @@ function orderNotes(o){
 function orderPayment(o){
   return o.payment || o.payment_method || o.pay_method || o.paymentMethod || "";
 }
+
+function orderAddressLabel(o){
+  return String(
+    o?.address_label ||
+    o?.address ||
+    o?.customer_address ||
+    ""
+  ).trim();
+}
+
+function orderMapUrl(o){
+  return String(o?.map_url || "").trim();
+}
+
+function orderLocation(o){
+  const lat = Number(o?.location?.lat ?? null);
+  const lng = Number(o?.location?.lng ?? o?.location?.lon ?? null);
+
+  if(isFinite(lat) && isFinite(lng)){
+    return { lat, lng };
+  }
+
+  return null;
+}
+
+function orderEmbedMapUrl(o){
+  const mapUrl = orderMapUrl(o);
+  const loc = orderLocation(o);
+
+  if(loc){
+    return `https://www.google.com/maps?q=${loc.lat},${loc.lng}&z=16&output=embed`;
+  }
+
+  if(mapUrl){
+    const qMatch = mapUrl.match(/[?&]q=([^&]+)/i);
+    if(qMatch && qMatch[1]){
+      return `https://www.google.com/maps?q=${qMatch[1]}&z=16&output=embed`;
+    }
+
+    const searchMatch = mapUrl.match(/[?&]query=([^&]+)/i);
+    if(searchMatch && searchMatch[1]){
+      return `https://www.google.com/maps?q=${searchMatch[1]}&z=16&output=embed`;
+    }
+  }
+
+  const addr = orderAddressLabel(o);
+  if(addr){
+    return `https://www.google.com/maps?q=${encodeURIComponent(addr)}&z=16&output=embed`;
+  }
+
+  return "";
+}
+
+
 function orderPaid(o){
   if(o && typeof o.paid === "boolean") return o.paid;
   const st = String(o?.payment_status || o?.pay_status || "").toUpperCase();
@@ -3723,43 +3777,64 @@ async function payOrder(id){
 }
 
     // ====== Order modal ======
-    function buildOrderText(order){
-      const d = orderCreatedDate(order);
-      const created = d ? d.toLocaleString("pt-BR") : "-";
-      const name = orderCustomerName(order);
-      const phone = orderCustomerPhone(order);
-      const type = orderType(order);
-      const addr = orderAddress(order);
-      const pay = orderPayment(order);
-      const notes = orderNotes(order);
-      const items = orderItems(order);
+function buildOrderText(order){
+  const created = formatDateTime(order?.created_at);
+  const name = orderCustomerName(order) || "-";
+  const phone = orderCustomerPhone(order) || "-";
+  const type = orderType(order) || "-";
+  const addr = orderAddressLabel(order) || orderAddress(order) || "-";
+  const mapUrl = orderMapUrl(order);
+  const pay = orderPayment(order) || "-";
+  const notes = orderNotes(order) || "-";
+  const items = orderItems(order);
 
-      const lines = [];
-      lines.push(`🧾 Pedido #${order.id}`);
-      lines.push(`📅 ${created}`);
-      if(name) lines.push(`👤 ${name}`);
-      if(phone) lines.push(`📞 ${phone}`);
-      lines.push(`🚚 ${type}`);
-      if(type === "ENTREGA" && addr) lines.push(`📍 ${addr}`);
-      if(pay) lines.push(`💳 Pagamento: ${pay}`);
-      if(orderShipping(order) > 0) lines.push(`🛵 Frete: ${money(orderShipping(order))}`);
-      if(notes) lines.push(`📝 Obs: ${notes}`);
-      lines.push("");
-      lines.push("Itens:");
-      for(const it of items){
-        const qty = Number(it.qty ?? it.quantity ?? 0);
-        const nm = it.name || it.product_name || it.product || "Item";
-        const pr = Number(it.price ?? it.unit_price ?? 0);
-        lines.push(`- ${qty}× ${nm} (${money(pr)}) = ${money(qty*pr)}`);
-      }
-      lines.push("");
-      lines.push(`Subtotal: ${money(orderSubtotal(order))}`);
-      lines.push(`Frete: ${money(orderShipping(order))}`);
-      if(orderDiscount(order) > 0) lines.push(`Desconto: -${money(orderDiscount(order))}`);
-      lines.push(`TOTAL: ${money(orderTotal(order))}`);
-      return lines.join("\n");
+  const subtotal = Number(order?.subtotal || 0);
+  const shipping = Number(order?.shipping || 0);
+  const discount = Number(order?.discount || 0);
+  const total = Number(order?.total || 0);
+  const status = statusUpper(order);
+
+  const lines = [];
+  lines.push(`Pedido #${order?.id || order?._id || "—"}`);
+  lines.push(`Data: ${created}`);
+  lines.push(`Status: ${status}${orderPaid(order) ? " ✅" : ""}`);
+  lines.push("");
+  lines.push(`Cliente: ${name}`);
+  lines.push(`Telefone: ${phone}`);
+  lines.push(`Tipo: ${type}`);
+
+  if(type === "ENTREGA"){
+    lines.push(`Endereço: ${addr}`);
+    if(mapUrl) lines.push(`Mapa: ${mapUrl}`);
+  }
+
+  lines.push(`Pagamento: ${pay}`);
+
+  if(notes && notes !== "-"){
+    lines.push(`Observações: ${notes}`);
+  }
+
+  lines.push("");
+  lines.push("Itens:");
+  if(items.length){
+    items.forEach(it=>{
+      const qty = Number(it?.qty || 0);
+      const name = String(it?.name || "Item");
+      const price = Number(it?.price || 0);
+      lines.push(`- ${qty}x ${name} — ${money(price)}`);
+    });
+  }else{
+    lines.push("- Sem itens");
+  }
+
+  lines.push("");
+  lines.push(`Subtotal: ${money(subtotal)}`);
+  lines.push(`Frete: ${money(shipping)}`);
+  if(discount > 0) lines.push(`Desconto: -${money(discount)}`);
+  lines.push(`Total: ${money(total)}`);
+
+  return lines.join("\n");
 }
-
     function openOrderModal(order){
       $("orderModalTitle").textContent = `Pedido #${order.id}`;
       const body = $("orderModalBody");
@@ -3769,7 +3844,10 @@ async function payOrder(id){
 const phone = orderCustomerPhone(order) || "-";
 const name = orderCustomerName(order) || "-";
 const type = orderType(order) || "-";
-const addr = orderAddress(order) || "-";
+const addr = orderAddressLabel(order) || orderAddress(order) || "-";
+const mapUrl = orderMapUrl(order);
+const embedMapUrl = orderEmbedMapUrl(order);
+const loc = orderLocation(order);
 const status = statusUpper(order);
 const payment = orderPayment(order) || "-";
 const notes = orderNotes(order) || "-";
@@ -3798,59 +3876,156 @@ const notes = orderNotes(order) || "-";
       const discount = orderDiscount(order);
       const total = orderTotal(order);
 
-      body.innerHTML = `
-        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
-          <div class="card" style="margin:0;">
-            <div class="muted">Data</div>
-            <div><b>${created}</b></div>
-            <div style="margin-top:10px;" class="muted">Status</div>
-            <div><b>${escapeHtml(status)}</b> ${orderPaid(order) ? "✅" : ""}</div>
+body.innerHTML = `
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
+    <div class="card" style="margin:0;">
+      <div class="muted">Data</div>
+      <div><b>${created}</b></div>
+      <div style="margin-top:10px;" class="muted">Status</div>
+      <div><b>${escapeHtml(status)}</b> ${orderPaid(order) ? "✅" : ""}</div>
+    </div>
+
+    <div class="card" style="margin:0;">
+      <div class="muted">Cliente</div>
+      <div><b>${escapeHtml(name)}</b></div>
+      <div class="muted" style="margin-top:10px;">Telefone</div>
+      <div><b>${escapeHtml(phone)}</b></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="muted">Tipo</div>
+    <div><b>${escapeHtml(type)}</b></div>
+
+    <div class="muted" style="margin-top:10px;">Endereço</div>
+    <div>${type === "ENTREGA" ? escapeHtml(addr) : "-"}</div>
+
+    ${
+      type === "ENTREGA"
+        ? `
+        <div style="
+          margin-top:12px;
+          padding:14px;
+          border:1px solid rgba(0,0,0,.08);
+          border-radius:16px;
+          background:rgba(25,179,122,.06);
+        ">
+          <div class="muted" style="margin-bottom:6px;">Localização da entrega</div>
+
+          <div style="font-weight:1000;line-height:1.45;color:#1f1f1f;">
+            ${escapeHtml(addr || "Endereço não informado")}
           </div>
 
-          <div class="card" style="margin:0;">
-            <div class="muted">Cliente</div>
-            <div><b>${escapeHtml(name)}</b></div>
-            <div class="muted" style="margin-top:10px;">Telefone</div>
-            <div><b>${escapeHtml(phone)}</b></div>
+          ${
+            loc
+              ? `
+              <div class="hint" style="margin-top:6px;">
+                Coordenadas: ${escapeHtml(String(loc.lat))}, ${escapeHtml(String(loc.lng))}
+              </div>
+              `
+              : ""
+          }
+
+          ${
+            mapUrl
+              ? `
+              <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="${escapeAttr(mapUrl)}" target="_blank" rel="noopener"
+                  style="
+                    text-decoration:none;
+                    background:#19b37a;
+                    color:#fff;
+                    font-weight:1000;
+                    border-radius:999px;
+                    padding:10px 16px;
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:center;
+                  ">
+                  📍 Ver no mapa
+                </a>
+              </div>
+              `
+              : ""
+          }
+        </div>
+        `
+        : ""
+    }
+
+    <div class="muted" style="margin-top:10px;">Pagamento</div>
+    <div><b>${escapeHtml(payment)}</b></div>
+
+    <div class="muted" style="margin-top:10px;">Observações</div>
+    <div>${escapeHtml(notes)}</div>
+  </div>
+
+  ${
+    type === "ENTREGA" && embedMapUrl
+      ? `
+      <div class="card" style="margin-top:12px;">
+        <div class="line" style="margin-bottom:10px;">
+          <div>
+            <div class="muted">Mapa da entrega</div>
+            <div><b>Localização do cliente</b></div>
           </div>
         </div>
 
-        <div class="card" style="margin-top:12px;">
-          <div class="muted">Tipo</div>
-          <div><b>${escapeHtml(type)}</b></div>
-          <div class="muted" style="margin-top:10px;">Endereço</div>
-          <div>${type==="ENTREGA" ? escapeHtml(addr) : "-"}</div>
-          <div class="muted" style="margin-top:10px;">Pagamento</div>
-          <div><b>${escapeHtml(payment)}</b></div>
-          <div class="muted" style="margin-top:10px;">Observações</div>
-          <div>${escapeHtml(notes)}</div>
+        <div style="
+          border-radius:16px;
+          overflow:hidden;
+          border:1px solid rgba(0,0,0,.10);
+          background:#f6f6f6;
+        ">
+          <iframe
+            src="${escapeAttr(embedMapUrl)}"
+            style="width:100%;height:240px;border:0;display:block;"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen
+          ></iframe>
         </div>
 
-        <div class="card" style="margin-top:12px;">
-          <h4 style="margin:0 0 10px 0;">Itens</h4>
-          <div class="list">${itemsHtml || `<div class="muted">Sem itens.</div>`}</div>
-        </div>
-
-        <div class="card" style="margin-top:12px;">
-          <div class="line"><span>Subtotal</span><b>${money(subtotal)}</b></div>
-          <div class="line"><span>Frete</span><b>${money(shipping)}</b></div>
-          ${discount>0 ? `<div class="line"><span>Desconto</span><b>-${money(discount)}</b></div>` : ""}
-          <div class="line" style="margin-top:8px;"><span>Total</span><b>${money(total)}</b></div>
-        </div>
-      `;
-    
-
-      const text = buildOrderText(order);
-      $("copyOrderText").onclick = async ()=>{
-        try{
-          await navigator.clipboard.writeText(text);
-          toast("Copiado!");
-        }catch(e){
-          alert("Não consegui copiar automaticamente. Texto:\n\n" + text);
+        ${
+          mapUrl
+            ? `
+            <div style="margin-top:10px;">
+              <a href="${escapeAttr(mapUrl)}" target="_blank" rel="noopener"
+                style="
+                  text-decoration:none;
+                  background:#fff;
+                  color:#19b37a;
+                  border:1px solid rgba(25,179,122,.25);
+                  font-weight:1000;
+                  border-radius:999px;
+                  padding:9px 14px;
+                  display:inline-flex;
+                  align-items:center;
+                  justify-content:center;
+                ">
+                Abrir no Google Maps
+              </a>
+            </div>
+            `
+            : ""
         }
-      };
+      </div>
+      `
+      : ""
+  }
 
-      $("orderBack").classList.add("open");
+  <div class="card" style="margin-top:12px;">
+    <h4 style="margin:0 0 10px 0;">Itens</h4>
+    <div class="list">${itemsHtml || `<div class="muted">Sem itens.</div>`}</div>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="line"><span>Subtotal</span><b>${money(subtotal)}</b></div>
+    <div class="line"><span>Frete</span><b>${money(shipping)}</b></div>
+    ${discount>0 ? `<div class="line"><span>Desconto</span><b>-${money(discount)}</b></div>` : ""}
+    <div class="line" style="margin-top:8px;"><span>Total</span><b>${money(total)}</b></div>
+  </div>
+`;
 
 
     }
