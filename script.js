@@ -1785,7 +1785,33 @@ if(service.toLowerCase() === "delivery" || String(order.type||"").toUpperCase()=
 
 
 
-function openOrderSuccessBox(order){
+
+
+
+
+
+
+function buildOrderWhatsAppUrl(order){
+  const to = phoneOnly(SETTINGS?.whatsapp_number || "");
+  const preview = buildPreviewLink(order);
+  const msg = whatsappMessage(order);
+
+  const finalMessage = [
+    preview ? `📎 Preview do pedido: ${preview}` : "",
+    msg || ""
+  ].filter(Boolean).join("\n\n");
+
+  if(to){
+    return `https://wa.me/${to}?text=${encodeURIComponent(finalMessage)}`;
+  }
+
+  return `https://wa.me/?text=${encodeURIComponent(finalMessage)}`;
+}
+
+
+
+
+function openOrderSuccessBox(order, whatsappUrl){
   const old = document.getElementById("orderSuccessOverlay");
   if(old) old.remove();
 
@@ -1801,6 +1827,8 @@ function openOrderSuccessBox(order){
   const typeLabel = type === "ENTREGA"
     ? "Entrega"
     : "Retirada no balcão";
+
+  const closeHref = String(whatsappUrl || "").trim() || "#";
 
   const box = document.createElement("div");
   box.id = "orderSuccessOverlay";
@@ -1935,15 +1963,23 @@ function openOrderSuccessBox(order){
           : ""
       }
 
-      <button id="orderSuccessCloseBtn" style="
-        border:none;
-        background:#8b5a4a;
-        color:#fff;
-        font-weight:800;
-        border-radius:999px;
-        padding:12px 22px;
-        cursor:pointer;
-      ">Fechar</button>
+      <a
+        id="orderSuccessCloseBtn"
+        href="${escapeAttr(closeHref)}"
+        style="
+          text-decoration:none;
+          border:none;
+          background:#8b5a4a;
+          color:#fff;
+          font-weight:800;
+          border-radius:999px;
+          padding:12px 22px;
+          cursor:pointer;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+        "
+      >Fechar</a>
     </div>
   </div>
 </div>
@@ -1951,13 +1987,16 @@ function openOrderSuccessBox(order){
 
   document.body.appendChild(box);
 
-  const close = () => box.remove();
-  document.getElementById("orderSuccessCloseBtn")?.addEventListener("click", close);
+  document.getElementById("orderSuccessCloseBtn")?.addEventListener("click", ()=>{
+    box.remove();
+  });
+
   box.addEventListener("click", (e)=>{
-    if(e.target === box.firstElementChild) close();
+    if(e.target === box.firstElementChild){
+      box.remove();
+    }
   });
 }
-
 function setOrderButtonLoading(isLoading){
   const btn =
     document.getElementById("sendOrderBtn") ||
@@ -2343,12 +2382,15 @@ try{
       throw new Error(data?.error || "Erro ao enviar pedido.");
     }
 
-    LAST_ORDER_SENT_AT = Date.now();
-    CART = [];
-    renderCart();
-    closeModal();
-    closeDrawer();
-   openOrderSuccessBox(data.order || data);
+const savedOrder = data.order || data;
+const whatsappUrl = buildOrderWhatsAppUrl(savedOrder);
+
+LAST_ORDER_SENT_AT = Date.now();
+CART = [];
+renderCart();
+closeModal();
+closeDrawer();
+openOrderSuccessBox(savedOrder, whatsappUrl);
 }catch(err){
   if(err?.name === "AbortError"){
     alert("O envio do pedido demorou demais para responder. Tente novamente em alguns segundos.");
@@ -2979,7 +3021,7 @@ function flyToCart(fromEl, toEl){
     // anima com transition
     const dx = endX - startX;
     const dy = endY - startY;
- 
+
     requestAnimationFrame(()=>{
       clone.style.transition =
         "transform 520ms cubic-bezier(.22,1,.36,1), opacity 520ms cubic-bezier(.22,1,.36,1)";
