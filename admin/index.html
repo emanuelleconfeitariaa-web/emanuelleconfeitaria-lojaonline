@@ -1058,10 +1058,14 @@
             <div id="pAddonsList" class="addonsList"></div>
             <button class="btn btnGhost" type="button" id="pAddonsAdd" style="margin-top:8px;width:100%;">+ Adicionar adicional</button>
 
-            <label style="margin-top:12px">Sabores (obrigatório escolher 1 na loja, se existir)</label>
-            <div class="muted">Ex.: Morango, Chocolate, Nuvem Doce</div>
-            <div id="pFlavorsList" class="addonsList"></div>
-            <button class="btn btnGhost" type="button" id="pFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
+<label style="margin-top:12px">Sabores (obrigatório escolher 1 na loja, se existir)</label>
+<div class="muted">Ex.: Morango, Chocolate, Nuvem Doce</div>
+
+<label style="margin-top:8px">Texto exibido na loja</label>
+<input id="pFlavorLabel" class="inp" placeholder="Ex.: Escolha o sabor do seu vulcãozinho">
+
+<div id="pFlavorsList" class="addonsList"></div>
+<button class="btn btnGhost" type="button" id="pFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
 
 <label>Imagens do produto</label>
 
@@ -1743,6 +1747,10 @@
 
 <label style="margin-top:12px">Sabores</label>
 <div class="muted">Se houver sabores, a loja exigirá a escolha de 1 sabor.</div>
+
+<label style="margin-top:8px">Texto exibido na loja</label>
+<input id="eFlavorLabel" class="inp" placeholder="Ex.: Escolha o sabor do seu brownie">
+
 <div id="eFlavorsList" class="addonsList"></div>
 <button class="btn btnGhost" type="button" id="eFlavorsAdd" style="margin-top:8px;width:100%;">+ Adicionar sabor</button>
 
@@ -4252,14 +4260,15 @@ if(f2 && !img2){
   const image_url = images[0] || "";
 
 
-  const payload = {
-    name, price, category, subcategory, description,
-    featured, stock_enabled, stock_qty, low_stock_alert,
-    paused, image_url, images,
-    addons: readAddonsEditor("pAddonsList"),
-    flavors: readFlavorsEditor("pFlavorsList"),
-    discount_percent: Number($("pDiscount")?.value || 0)
-  };
+const payload = {
+  name, price, category, subcategory, description,
+  featured, stock_enabled, stock_qty, low_stock_alert,
+  paused, image_url, images,
+  addons: readAddonsEditor("pAddonsList"),
+  flavors: readFlavorsEditor("pFlavorsList"),
+  flavor_label: $("pFlavorLabel")?.value.trim() || "",
+  discount_percent: Number($("pDiscount")?.value || 0)
+};
 
   const res = await apiFetch("/api/products",{
     method:"POST",
@@ -4288,6 +4297,7 @@ if(f2 && !img2){
   $("pPaused").value = "false";
   if($("pImgFile1")) $("pImgFile1").value = "";
   if($("pImgFile2")) $("pImgFile2").value = "";
+  if($("pFlavorLabel")) $("pFlavorLabel").value = "";
   $("pDiscount").value = "0";
   fillAddonsEditor("pAddonsList", []);
   fillFlavorsEditor("pFlavorsList", []);
@@ -4374,6 +4384,7 @@ async function openEdit(id){
   $("eStatus").textContent = "";
   fillAddonsEditor("eAddonsList", editingCurrent.addons || []);
   fillFlavorsEditor("eFlavorsList", editingCurrent.flavors || []);
+  if($("eFlavorLabel")) $("eFlavorLabel").value = editingCurrent.flavor_label || "";
   editingCurrent.__editImages = editImages;
 
   EDIT_REMOVE_IMAGE_1 = false;
@@ -4403,21 +4414,22 @@ function closeEdit(){
 async function saveEdit(){
   if(!editingId) return;
 
-  const payload = {
-    name: $("eName").value.trim(),
-    price: Number($("ePrice").value || 0),
-    category: $("eCat").value.trim(),
-    subcategory: $("eSub").value.trim(),
-    description: $("eDesc").value.trim(),
-    featured: ($("eFeatured").value === "true"),
-    stock_enabled: ($("eStockEnabled").value !== "false"),
-    stock_qty: Number($("eStockQty").value || 0),
-    low_stock_alert: Number($("eLowStock").value || 5),
-    paused: ($("ePaused").value === "true"),
-    addons: readAddonsEditor("eAddonsList"),
-    flavors: readFlavorsEditor("eFlavorsList"),
-    discount_percent: Number($("eDiscount")?.value || 0)
-  };
+const payload = {
+  name: $("eName").value.trim(),
+  price: Number($("ePrice").value || 0),
+  category: $("eCat").value.trim(),
+  subcategory: $("eSub").value.trim(),
+  description: $("eDesc").value.trim(),
+  featured: ($("eFeatured").value === "true"),
+  stock_enabled: ($("eStockEnabled").value !== "false"),
+  stock_qty: Number($("eStockQty").value || 0),
+  low_stock_alert: Number($("eLowStock").value || 5),
+  paused: ($("ePaused").value === "true"),
+  addons: readAddonsEditor("eAddonsList"),
+  flavors: readFlavorsEditor("eFlavorsList"),
+  flavor_label: $("eFlavorLabel")?.value.trim() || "",
+  discount_percent: Number($("eDiscount")?.value || 0)
+};
 
   const currentImages = Array.isArray(editingCurrent?.images)
     ? editingCurrent.images.map(x => String(x || "").trim()).filter(Boolean).slice(0,2)
