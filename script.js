@@ -50,32 +50,29 @@ function renderModalFlavors(p){
   const list = $("prodFlavorList");
   if(!wrap || !list) return;
 
-  const flavors = Array.isArray(p?.flavors) ? p.flavors.map(x => String(x || "").trim()).filter(Boolean) : [];
+  const flavors = Array.isArray(p?.flavors)
+    ? p.flavors.map(x => String(x || "").trim()).filter(Boolean)
+    : [];
+
+  const flavorTitle = String(p?.flavor_label || "").trim() || "Escolha o sabor";
+
+  const titleEl = $("prodFlavorTitle");
+  if(titleEl) titleEl.textContent = flavorTitle;
 
   if(!flavors.length){
     wrap.style.display = "none";
     list.innerHTML = "";
-    MODAL_FLAVOR = "";
     return;
   }
 
-  wrap.style.display = "block";
-
-  list.innerHTML = flavors.map((flavor, i) => `
-    <label style="
-      display:flex; align-items:center; gap:10px;
-      padding: 8px 12px;
-      border:1px solid rgba(0,0,0,.18);
-      border-radius:8px;
-      background: rgba(255,255,255,.18);
-      font-size: 13px;
-      font-weight: 600;
-      cursor:pointer;
-    ">
-      <input type="radio" name="prodFlavor" value="${escapeAttr(flavor)}" ${i === 0 ? "checked" : ""}>
-      <span>${escapeHtml(flavor)}</span>
+  wrap.style.display = "";
+  list.innerHTML = flavors.map((flv, i) => `
+    <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #ddd;border-radius:12px;padding:10px 12px;cursor:pointer;">
+      <input type="radio" name="prodFlavor" value="${escapeHtml(flv)}" ${i===0 ? "checked" : ""}>
+      <span style="flex:1;">${escapeHtml(flv)}</span>
     </label>
   `).join("");
+
 
   MODAL_FLAVOR = flavors[0] || "";
 
@@ -2933,7 +2930,7 @@ $("addFromModal").addEventListener("click", ()=>{
 
   const hasFlavors = Array.isArray(MODAL_PRODUCT.flavors) && MODAL_PRODUCT.flavors.some(x => String(x || "").trim());
   if(hasFlavors && !String(MODAL_FLAVOR || "").trim()){
-    toast("Escolha o sabor.");
+   toast((String(MODAL_PRODUCT?.flavor_label || "").trim() || "Escolha o sabor") + ".");
     return;
   }
 
@@ -2945,7 +2942,7 @@ $("addAndClose").addEventListener("click", ()=>{
 
   const hasFlavors = Array.isArray(MODAL_PRODUCT.flavors) && MODAL_PRODUCT.flavors.some(x => String(x || "").trim());
   if(hasFlavors && !String(MODAL_FLAVOR || "").trim()){
-    toast("Escolha o sabor.");
+   toast((String(MODAL_PRODUCT?.flavor_label || "").trim() || "Escolha o sabor") + ".");
     return;
   }
 
