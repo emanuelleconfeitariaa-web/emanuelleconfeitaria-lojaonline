@@ -1810,7 +1810,6 @@ function buildOrderWhatsAppUrl(order){
 
 
 
-
 function openOrderSuccessBox(order, whatsappUrl){
   const old = document.getElementById("orderSuccessOverlay");
   if(old) old.remove();
@@ -1828,7 +1827,7 @@ function openOrderSuccessBox(order, whatsappUrl){
     ? "Entrega"
     : "Retirada no balcão";
 
-  const closeHref = String(whatsappUrl || "").trim() || "#";
+  const waHref = String(whatsappUrl || "").trim();
 
   const box = document.createElement("div");
   box.id = "orderSuccessOverlay";
@@ -1898,7 +1897,7 @@ function openOrderSuccessBox(order, whatsappUrl){
 
     <div style="font-size:14px;color:#555;line-height:1.5;margin-bottom:18px;">
       Seu pedido foi enviado com sucesso.<br>
-      Você também será avisado no WhatsApp sobre as próximas atualizações.
+      Você será redirecionado para o WhatsApp.
     </div>
 
     <div style="
@@ -1964,8 +1963,8 @@ function openOrderSuccessBox(order, whatsappUrl){
       }
 
       <a
-        id="orderSuccessCloseBtn"
-        href="${escapeAttr(closeHref)}"
+        id="orderSuccessWhatsBtn"
+        href="${escapeAttr(waHref || "#")}"
         style="
           text-decoration:none;
           border:none;
@@ -1979,7 +1978,7 @@ function openOrderSuccessBox(order, whatsappUrl){
           align-items:center;
           justify-content:center;
         "
-      >Fechar</a>
+      >Ir para o WhatsApp</a>
     </div>
   </div>
 </div>
@@ -1987,8 +1986,19 @@ function openOrderSuccessBox(order, whatsappUrl){
 
   document.body.appendChild(box);
 
-  document.getElementById("orderSuccessCloseBtn")?.addEventListener("click", ()=>{
+  let redirected = false;
+
+  function goToWhatsApp(){
+    if(redirected) return;
+    if(!waHref || waHref === "#") return;
+    redirected = true;
+    window.location.href = waHref;
+  }
+
+  document.getElementById("orderSuccessWhatsBtn")?.addEventListener("click", (e)=>{
+    e.preventDefault();
     box.remove();
+    goToWhatsApp();
   });
 
   box.addEventListener("click", (e)=>{
@@ -1996,6 +2006,10 @@ function openOrderSuccessBox(order, whatsappUrl){
       box.remove();
     }
   });
+
+  setTimeout(()=>{
+    goToWhatsApp();
+  }, 900);
 }
 function setOrderButtonLoading(isLoading){
   const btn =
